@@ -14,7 +14,7 @@ const {
   getContractVersions,
   getContractAudit
 } = require('../controllers/contractController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, checkPermission } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
 // All routes require authentication
@@ -29,14 +29,14 @@ router.get('/:id', getContract);
 // Get contract versions
 router.get('/:id/versions', getContractVersions);
 
-// Get contract audit trail (Super Admin only)
-router.get('/:id/audit', authorize('super_admin'), getContractAudit);
-router.get('/:id/audit-logs', authorize('super_admin'), getContractAudit);
+// Get contract audit trail (requires canViewAuditLogs permission)
+router.get('/:id/audit', checkPermission('canViewAuditLogs'), getContractAudit);
+router.get('/:id/audit-logs', checkPermission('canViewAuditLogs'), getContractAudit);
 
-// Create contract (Legal only)
+// Create contract (requires canCreateContract permission)
 router.post(
   '/',
-  authorize('legal'),
+  checkPermission('canCreateContract'),
   [
     body('contractName').notEmpty().withMessage('Contract name is required'),
     body('client').notEmpty().withMessage('Client is required'),
@@ -47,10 +47,10 @@ router.post(
   createContract
 );
 
-// Update draft contract (Legal only)
+// Update draft contract (requires canEditDraft or canEditSubmitted permission)
 router.put(
   '/:id',
-  authorize('legal'),
+  checkPermission('canEditDraft', 'canEditSubmitted'),
   [
     body('contractName').optional().notEmpty().withMessage('Contract name cannot be empty'),
     body('effectiveDate').optional().isISO8601().withMessage('Valid effective date is required'),
@@ -60,16 +60,16 @@ router.put(
   updateContract
 );
 
-// Submit contract for review (Legal only)
-router.post('/:id/submit', authorize('legal'), submitContract);
+// Submit contract for review (requires canSubmitContract permission)
+router.post('/:id/submit', checkPermission('canSubmitContract'), submitContract);
 
-// Approve contract (Finance or Client)
-router.post('/:id/approve', authorize('finance', 'client'), approveContract);
+// Approve contract (requires canApproveContract permission)
+router.post('/:id/approve', checkPermission('canApproveContract'), approveContract);
 
-// Reject contract (Finance or Client)
+// Reject contract (requires canRejectContract permission)
 router.post(
   '/:id/reject',
-  authorize('finance', 'client'),
+  checkPermission('canRejectContract'),
   [
     // Accept either 'remarks', 'remarksInternal', or 'remarksClient' for rejection
     body('remarks').optional().notEmpty().withMessage('Rejection remarks cannot be empty'),
@@ -94,10 +94,10 @@ router.post(
   rejectContract
 );
 
-// Create amendment (Legal only)
+// Create amendment (requires canAmendContract permission)
 router.post(
   '/:id/amend',
-  authorize('legal'),
+  checkPermission('canAmendContract'),
   [
     body('contractName').optional().notEmpty().withMessage('Contract name cannot be empty'),
     body('effectiveDate').optional().isISO8601().withMessage('Valid effective date is required'),
@@ -107,7 +107,7 @@ router.post(
   createAmendment
 );
 
-// Cancel contract (Client or Super Admin only)
-router.post('/:id/cancel', authorize('client', 'super_admin'), cancelContract);
+// Cancel contract (requires canCancelContract permission)
+router.post('/:id/cancel', checkPermission('canCancelContract'), cancelContract);
 
 module.exports = router;

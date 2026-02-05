@@ -49,7 +49,7 @@ function App() {
             <Route
               path="contracts/new"
               element={
-                <ProtectedRoute allowedRoles={['legal']}>
+                <ProtectedRoute requiredPermissions={['canCreateContract']}>
                   <CreateContract />
                 </ProtectedRoute>
               }
@@ -59,7 +59,7 @@ function App() {
             <Route
               path="users"
               element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
+                <ProtectedRoute requiredPermissions={['canManageUsers']}>
                   <UserManagement />
                 </ProtectedRoute>
               }
@@ -68,7 +68,7 @@ function App() {
             <Route
               path="admin/system-logs"
               element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
+                <ProtectedRoute requiredPermissions={['canViewSystemLogs']}>
                   <SystemLogs />
                 </ProtectedRoute>
               }
@@ -76,7 +76,7 @@ function App() {
             <Route
               path="admin/workflows"
               element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
+                <ProtectedRoute requiredPermissions={['canConfigureWorkflow']}>
                   <WorkflowSettings />
                 </ProtectedRoute>
               }
@@ -84,7 +84,7 @@ function App() {
             <Route
               path="admin/permissions"
               element={
-                <ProtectedRoute allowedRoles={['super_admin']}>
+                <ProtectedRoute requiredPermissions={['canConfigurePermissions']}>
                   <RolePermissions />
                 </ProtectedRoute>
               }

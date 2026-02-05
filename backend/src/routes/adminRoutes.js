@@ -11,7 +11,7 @@ const {
   getSystemLogs,
   getSystemLogStats,
 } = require('../controllers/adminController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, checkPermission } = require('../middleware/auth');
 
 // All routes require authentication
 router.use(protect);
@@ -25,23 +25,23 @@ router.get('/workflows/active', getActiveWorkflow);
 // Get specific workflow by ID (for contract reference)
 router.get('/workflows/:id', getWorkflowById);
 
-// Super Admin only routes
-router.get('/workflows', authorize('super_admin'), getWorkflows);
+// Workflow configuration (requires canConfigureWorkflow permission)
+router.get('/workflows', checkPermission('canConfigureWorkflow'), getWorkflows);
 
 // Create new workflow version (POST only - updates are done by creating new versions)
-router.post('/workflows', authorize('super_admin'), createWorkflowVersion);
+router.post('/workflows', checkPermission('canConfigureWorkflow'), createWorkflowVersion);
 
 // Note: PUT and DELETE are intentionally removed - workflows are immutable
 // To change a workflow, create a new version using POST
 
 // ==================== PERMISSION ROUTES ====================
 
-router.get('/permissions', authorize('super_admin'), getPermissions);
-router.put('/permissions/:role', authorize('super_admin'), updatePermissions);
+router.get('/permissions', checkPermission('canConfigurePermissions'), getPermissions);
+router.put('/permissions/:role', checkPermission('canConfigurePermissions'), updatePermissions);
 
 // ==================== SYSTEM LOG ROUTES ====================
 
-router.get('/system-logs', authorize('super_admin'), getSystemLogs);
-router.get('/system-logs/stats', authorize('super_admin'), getSystemLogStats);
+router.get('/system-logs', checkPermission('canViewSystemLogs'), getSystemLogs);
+router.get('/system-logs/stats', checkPermission('canViewSystemLogs'), getSystemLogStats);
 
 module.exports = router;

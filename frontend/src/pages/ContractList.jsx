@@ -14,7 +14,7 @@ import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
 
 const ContractList = () => {
-  const { isLegal } = useAuth();
+  const { hasPermission } = useAuth();
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,8 +77,17 @@ const ContractList = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Contracts</h2>
-        {isLegal && (
+        <h2 
+          className="text-2xl font-bold"
+          style={{ 
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          Contracts
+        </h2>
+        {hasPermission('canCreateContract') && (
           <Link to="/contracts/new" className="btn-primary flex items-center gap-2 justify-center">
             <FiPlus className="h-5 w-5" />
             Create Contract
@@ -91,11 +100,16 @@ const ContractList = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <div 
+              className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center rounded-l-lg"
+              style={{ background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)' }}
+            >
+              <FiSearch className="text-slate-500 h-5 w-5" />
+            </div>
             <input
               type="text"
               placeholder="Search by name, number, or client..."
-              className="input-field pl-10"
+              className="input-field pl-12"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -104,9 +118,12 @@ const ContractList = () => {
           {/* Status Filter */}
           <div className="sm:w-64">
             <select
-              className="input-field"
+              className="input-field cursor-pointer"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ 
+                background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+              }}
             >
               <option value="">All Statuses</option>
               <option value="draft">Draft</option>
@@ -130,7 +147,7 @@ const ContractList = () => {
               : 'Create your first contract to get started'
           }
           action={
-            isLegal && !searchTerm && !statusFilter ? (
+            hasPermission('canCreateContract') && !searchTerm && !statusFilter ? (
               <Link to="/contracts/new" className="btn-primary flex items-center gap-2 mx-auto">
                 <FiPlus className="h-5 w-5" />
                 Create Contract
@@ -139,58 +156,75 @@ const ContractList = () => {
           }
         />
       ) : (
-        <div className="card">
+        <div className="card overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full">
               <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <tr style={{ background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)' }}>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Contract
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Client
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Amount
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Version
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Effective Date
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y" style={{ borderColor: 'rgba(226, 232, 240, 0.8)' }}>
                 {filteredContracts.map((contract) => (
-                  <tr key={contract._id} className="hover:bg-gray-50 transition-colors">
+                  <tr 
+                    key={contract._id} 
+                    className="transition-all duration-200"
+                    style={{ background: 'transparent' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, rgba(96, 165, 250, 0.05) 0%, rgba(96, 165, 250, 0.1) 50%, rgba(96, 165, 250, 0.05) 100%)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
                     <td className="px-4 py-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium" style={{ color: '#1e3a5f' }}>
                           {contract.contractName}
                         </p>
-                        <p className="text-xs text-gray-500">{contract.contractNumber}</p>
+                        <p className="text-xs" style={{ color: '#94a3b8' }}>{contract.contractNumber}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm" style={{ color: '#334155' }}>
                       {contract.client?.name || 'N/A'}
                     </td>
-                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4 text-sm font-medium" style={{ color: '#1e3a5f' }}>
                       {formatCurrency(contract.amount)}
                     </td>
                     <td className="px-4 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${contract.versionNumber > 1 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
+                      <span 
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm"
+                        style={contract.versionNumber > 1 ? {
+                          background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                          color: '#1e40af',
+                          border: '1px solid #93c5fd',
+                        } : {
+                          background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                          color: '#475569',
+                          border: '1px solid #cbd5e1',
+                        }}
+                      >
                         v{contract.versionNumber}
                         {contract.versionNumber > 1 && <span className="ml-1">🔁</span>}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">
+                    <td className="px-4 py-4 text-sm" style={{ color: '#64748b' }}>
                       {formatDate(contract.effectiveDate)}
                     </td>
                     <td className="px-4 py-4">
@@ -199,7 +233,8 @@ const ContractList = () => {
                     <td className="px-4 py-4">
                       <Link
                         to={`/contracts/${contract._id}`}
-                        className="text-primary-600 hover:text-primary-700 font-medium text-sm"
+                        className="font-medium text-sm transition-colors"
+                        style={{ color: '#2d8bc9' }}
                       >
                         View Details
                       </Link>

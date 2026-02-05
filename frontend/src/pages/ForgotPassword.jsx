@@ -32,75 +32,96 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 px-4">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
-              <FiMail className="h-8 w-8 text-white" />
+      <div className="w-full max-w-sm">
+        {/* Card */}
+        <div 
+          className="relative rounded-lg shadow-2xl overflow-hidden"
+          style={{
+            background: 'linear-gradient(145deg, #a8b5c4 0%, #8a9bb0 50%, #7a8c9e 100%)',
+          }}
+        >
+          {/* Icon Circle */}
+          <div className="flex justify-center pt-8 pb-4">
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg"
+              style={{
+                background: 'linear-gradient(145deg, #8a9aab 0%, #6b7b8c 100%)',
+                border: '4px solid rgba(255,255,255,0.3)',
+              }}
+            >
+              <FiMail className="w-10 h-10 text-slate-400/80" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Forgot Password?</h2>
-            <p className="text-gray-600 mt-2">
-              {sent
-                ? "Check your email for reset instructions"
-                : "Enter your email to receive a password reset link"}
-            </p>
           </div>
 
+          {/* Title */}
+          <h2 
+            className="text-center text-xl font-light tracking-widest mb-2"
+            style={{ color: '#4a5568' }}
+          >
+            FORGOT PASSWORD
+          </h2>
+          <p className="text-center text-sm mb-6 px-6" style={{ color: '#5a6a7a' }}>
+            {sent
+              ? "Check your email for reset instructions"
+              : "Enter your email to receive a reset link"}
+          </p>
+
           {!sent ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="email"
-                    required
-                    className="input-field pl-10"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+            <form onSubmit={handleSubmit} className="px-8 pb-6 space-y-4">
+              {/* Email Field */}
+              <div className="relative">
+                <div 
+                  className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center rounded-l"
+                  style={{ background: 'rgba(0,0,0,0.1)' }}
+                >
+                  <FiMail className="w-5 h-5 text-slate-500" />
                 </div>
+                <input
+                  type="email"
+                  required
+                  className="w-full pl-12 pr-4 py-3 bg-white rounded text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                  placeholder="Email Address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary"
+                className="w-full py-3 px-4 rounded font-medium text-white transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
+                style={{
+                  background: 'linear-gradient(180deg, #4da6d8 0%, #2d8bc9 50%, #1a6fa8 100%)',
+                }}
               >
-                {loading ? 'Sending...' : 'Send Reset Link'}
+                {loading ? 'Sending...' : 'SEND RESET LINK'}
               </button>
             </form>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-700 mb-6">
+            <div className="px-8 pb-6 text-center">
+              <p className="text-sm mb-4" style={{ color: '#4a5568' }}>
                 We've sent a password reset link to <strong>{email}</strong>
               </p>
-              <p className="text-sm text-gray-600">
-                Didn't receive the email? Check your spam folder or{' '}
-                <button
-                  onClick={() => setSent(false)}
-                  className="text-primary-600 hover:text-primary-500 font-medium"
-                >
-                  try again
-                </button>
-              </p>
+              <button
+                onClick={() => setSent(false)}
+                className="text-sm font-medium hover:underline"
+                style={{ color: '#2d8bc9' }}
+              >
+                Try again
+              </button>
             </div>
           )}
 
           {/* Back to Login */}
-          <div className="mt-6">
+          <div className="px-8 pb-6">
             <Link
               to="/login"
-              className="flex items-center justify-center gap-2 text-primary-600 hover:text-primary-500 font-medium"
+              className="flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+              style={{ color: '#5a6a7a' }}
             >
               <FiArrowLeft className="h-4 w-4" />
               Back to Login

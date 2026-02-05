@@ -1,5 +1,36 @@
 const User = require('../models/User');
+const RolePermission = require('../models/RolePermission');
 const { createSystemLog } = require('../utils/systemLog');
+
+// Helper function to get user permissions from database
+const getUserPermissions = async (role) => {
+  const rolePermission = await RolePermission.findOne({ role });
+  if (rolePermission) {
+    return rolePermission.permissions;
+  }
+  // Return default permissions if not found
+  return {
+    canCreateContract: false,
+    canEditDraft: false,
+    canEditSubmitted: false,
+    canDeleteContract: false,
+    canSubmitContract: false,
+    canApproveContract: false,
+    canRejectContract: false,
+    canAmendContract: false,
+    canCancelContract: false,
+    canViewAllContracts: false,
+    canViewOwnContracts: true,
+    canManageUsers: false,
+    canAssignRoles: false,
+    canViewAuditLogs: false,
+    canViewSystemLogs: false,
+    canConfigureWorkflow: false,
+    canConfigurePermissions: false,
+    canViewDashboard: true,
+    canViewReports: false,
+  };
+};
 
 // @desc    Login user
 // @route   POST /api/auth/login
@@ -101,10 +132,16 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
+    
+    // Get permissions for user's role from database
+    const permissions = await getUserPermissions(user.role);
 
     res.status(200).json({
       success: true,
-      data: user
+      data: {
+        ...user.toObject(),
+        permissions: permissions
+      }
     });
   } catch (error) {
     next(error);
@@ -133,8 +170,11 @@ exports.logout = async (req, res, next) => {
 };
 
 // Helper function to get token and send response
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = async (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
+  
+  // Get permissions for user's role from database
+  const permissions = await getUserPermissions(user.role);
 
   res.status(statusCode).json({
     success: true,
@@ -143,7 +183,8 @@ const sendTokenResponse = (user, statusCode, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      permissions: permissions
     }
   });
 };

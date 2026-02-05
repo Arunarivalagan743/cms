@@ -4,36 +4,100 @@
 
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-slate-200;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 text-gray-900 antialiased min-h-screen;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-white font-medium py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg;
+    background: linear-gradient(180deg, #4da6d8 0%, #2d8bc9 50%, #1a6fa8 100%);
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(180deg, #5bb5e5 0%, #3a9ad6 50%, #2580b8 100%);
+    box-shadow: 0 4px 15px rgba(45, 139, 201, 0.4);
   }
   
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply font-medium py-2.5 px-5 rounded-lg border transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+  
+  .btn-secondary:hover {
+    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.15);
   }
   
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-white font-medium py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg;
+    background: linear-gradient(180deg, #f87171 0%, #dc2626 50%, #b91c1c 100%);
+  }
+  
+  .btn-danger:hover {
+    background: linear-gradient(180deg, #fca5a5 0%, #ef4444 50%, #dc2626 100%);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
   }
   
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200;
+    background: white;
+    border: 1px solid #e2e8f0;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .input-field:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+    @apply rounded-xl shadow-lg p-6 transition-all duration-300;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+  
+  .card:hover {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-gradient {
+    @apply rounded-xl shadow-lg p-6;
+    background: linear-gradient(145deg, #a8b5c4 0%, #8a9bb0 50%, #7a8c9e 100%);
   }
   
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-sm;
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  
+  .sidebar-gradient {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+  
+  .table-header {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+    background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+    color: #475569;
+  }
+  
+  .table-row {
+    @apply transition-colors duration-200;
+  }
+  
+  .table-row:hover {
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.05) 0%, rgba(96, 165, 250, 0.1) 50%, rgba(96, 165, 250, 0.05) 100%);
   }
 }
+

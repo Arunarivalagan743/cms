@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const RolePermission = require('../models/RolePermission');
 
 // Protect routes - verify JWT token
 exports.protect = async (req, res, next) => {
@@ -34,6 +35,10 @@ exports.protect = async (req, res, next) => {
       });
     }
 
+    // Load user's permissions from database
+    const rolePermission = await RolePermission.findOne({ role: req.user.role });
+    req.userPermissions = rolePermission ? rolePermission.permissions : {};
+
     next();
   } catch (error) {
     return res.status(401).json({
@@ -50,6 +55,42 @@ exports.authorize = (...roles) => {
       return res.status(403).json({
         success: false,
         message: `Role '${req.user.role}' is not authorized to access this route`
+      });
+    }
+    next();
+  };
+};
+
+// Check specific permissions from database
+exports.checkPermission = (...requiredPermissions) => {
+  return (req, res, next) => {
+    const userPermissions = req.userPermissions || {};
+    
+    // Check if user has ANY of the required permissions
+    const hasPermission = requiredPermissions.some(perm => userPermissions[perm] === true);
+    
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to perform this action'
+      });
+    }
+    next();
+  };
+};
+
+// Check if user has ALL specified permissions
+exports.checkAllPermissions = (...requiredPermissions) => {
+  return (req, res, next) => {
+    const userPermissions = req.userPermissions || {};
+    
+    // Check if user has ALL of the required permissions
+    const hasAllPermissions = requiredPermissions.every(perm => userPermissions[perm] === true);
+    
+    if (!hasAllPermissions) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have all required permissions to perform this action'
       });
     }
     next();

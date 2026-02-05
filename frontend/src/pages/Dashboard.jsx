@@ -85,10 +85,17 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 
+            className="text-2xl font-bold"
+            style={{ 
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             {getGreeting()}, {user?.name}!
           </h2>
-          <p className="text-gray-600 mt-1">Here's what's happening with your contracts today</p>
+          <p className="mt-1" style={{ color: '#64748b' }}>Here's what's happening with your contracts today</p>
         </div>
         {isLegal && (
           <Link to="/contracts/new" className="btn-primary flex items-center gap-2">
@@ -108,15 +115,18 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Contracts - For all roles except Finance */}
         {!isFinance && (
-          <div className="card hover:shadow-md transition-shadow">
+          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Contracts</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
+                <p className="text-sm font-medium" style={{ color: '#64748b' }}>Total Contracts</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: '#1e3a5f' }}>
                   {stats?.totalContracts || 0}
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
+              <div 
+                className="p-3 rounded-xl shadow-md"
+                style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
+              >
                 <FiFileText className="h-6 w-6 text-blue-600" />
               </div>
             </div>
@@ -125,15 +135,18 @@ const Dashboard = () => {
 
         {/* Finance - Pending Review */}
         {isFinance && (
-          <div className="card hover:shadow-md transition-shadow">
+          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending My Review</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">
+                <p className="text-sm font-medium" style={{ color: '#64748b' }}>Pending My Review</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: '#d97706' }}>
                   {stats?.pendingReview || 0}
                 </p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
+              <div 
+                className="p-3 rounded-xl shadow-md"
+                style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}
+              >
                 <FiClock className="h-6 w-6 text-yellow-600" />
               </div>
             </div>
@@ -141,15 +154,18 @@ const Dashboard = () => {
         )}
 
         {/* Active Contracts - Available for all roles */}
-        <div className="card hover:shadow-md transition-shadow">
+        <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Contracts</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">
+              <p className="text-sm font-medium" style={{ color: '#64748b' }}>Active Contracts</p>
+              <p className="text-3xl font-bold mt-2" style={{ color: '#059669' }}>
                 {stats?.activeContracts || stats?.totalActive || 0}
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
+            <div 
+              className="p-3 rounded-xl shadow-md"
+              style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' }}
+            >
               <FiCheckCircle className="h-6 w-6 text-green-600" />
             </div>
           </div>
@@ -157,17 +173,20 @@ const Dashboard = () => {
 
         {/* Pending Reviews - For non-Finance roles */}
         {!isFinance && (
-          <div className="card hover:shadow-md transition-shadow">
+          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium" style={{ color: '#64748b' }}>
                   {isClient ? 'Pending My Approval' : 'Pending Reviews'}
                 </p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">
+                <p className="text-3xl font-bold mt-2" style={{ color: '#d97706' }}>
                   {stats?.pendingContracts || stats?.pendingApproval || 0}
                 </p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
+              <div 
+                className="p-3 rounded-xl shadow-md"
+                style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}
+              >
                 <FiClock className="h-6 w-6 text-yellow-600" />
               </div>
             </div>
@@ -176,15 +195,18 @@ const Dashboard = () => {
 
         {/* Finance - Approved By Me */}
         {isFinance && (
-          <div className="card hover:shadow-md transition-shadow">
+          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Approved By Me</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">
+                <p className="text-sm font-medium" style={{ color: '#64748b' }}>Approved By Me</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: '#2563eb' }}>
                   {stats?.approvedByMe || 0}
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
+              <div 
+                className="p-3 rounded-xl shadow-md"
+                style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
+              >
                 <FiCheckCircle className="h-6 w-6 text-blue-600" />
               </div>
             </div>
@@ -193,20 +215,26 @@ const Dashboard = () => {
 
         {/* Previous Role Activity - For users who changed roles */}
         {isFinance && stats?.previousRoleStats && (
-          <div className="card hover:shadow-md transition-shadow border-l-4 border-indigo-500">
+          <div 
+            className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            style={{ borderLeft: '4px solid #6366f1' }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium" style={{ color: '#64748b' }}>
                   My Previous Work (as {stats.previousRoleStats.previousRole})
                 </p>
-                <p className="text-3xl font-bold text-indigo-600 mt-2">
+                <p className="text-3xl font-bold mt-2" style={{ color: '#6366f1' }}>
                   {stats.previousRoleStats.contractsCreated || 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
                   {stats.previousRoleStats.activeFromCreated || 0} now active
                 </p>
               </div>
-              <div className="p-3 bg-indigo-100 rounded-lg">
+              <div 
+                className="p-3 rounded-xl shadow-md"
+                style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)' }}
+              >
                 <FiFileText className="h-6 w-6 text-indigo-600" />
               </div>
             </div>

@@ -19,25 +19,27 @@ import NotificationBell from './NotificationBell';
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logoutUser, isSuperAdmin, isLegal } = useAuth();
+  const { user, logoutUser, hasPermission, hasAnyPermission } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: FiHome, show: true },
-    { name: 'Contracts', href: '/contracts', icon: FiFileText, show: true },
+    { name: 'Dashboard', href: '/dashboard', icon: FiHome, show: hasPermission('canViewDashboard') },
+    { name: 'Contracts', href: '/contracts', icon: FiFileText, show: hasAnyPermission('canViewAllContracts', 'canViewOwnContracts') },
     {
       name: 'Users',
       href: '/users',
       icon: FiUsers,
-      show: isSuperAdmin,
+      show: hasPermission('canManageUsers'),
     },
   ];
 
   const adminNavigation = [
-    { name: 'System Logs', href: '/admin/system-logs', icon: FiActivity },
-    { name: 'Workflows', href: '/admin/workflows', icon: FiSettings },
-    { name: 'Permissions', href: '/admin/permissions', icon: FiShield },
+    { name: 'System Logs', href: '/admin/system-logs', icon: FiActivity, show: hasPermission('canViewSystemLogs') },
+    { name: 'Workflows', href: '/admin/workflows', icon: FiSettings, show: hasPermission('canConfigureWorkflow') },
+    { name: 'Permissions', href: '/admin/permissions', icon: FiShield, show: hasPermission('canConfigurePermissions') },
   ];
+
+  const showAdminSection = adminNavigation.some(item => item.show);
 
   const handleLogout = async () => {
     try {
@@ -46,7 +48,6 @@ const Sidebar = () => {
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      // Still logout locally even if API fails
       logoutUser();
       navigate('/login');
     }
@@ -57,32 +58,56 @@ const Sidebar = () => {
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg text-gray-700 hover:bg-gray-50"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg shadow-lg text-slate-700 hover:scale-105 transition-transform"
+        style={{
+          background: 'linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)',
+        }}
       >
         {mobileMenuOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
       </button>
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{
+          background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+        }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 px-4 bg-gray-800">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+          <div 
+            className="flex items-center justify-center h-16 px-4"
+            style={{
+              background: 'linear-gradient(145deg, #334155 0%, #1e293b 100%)',
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #4da6d8 0%, #1a6fa8 100%)',
+                }}
+              >
                 <span className="text-xl font-bold text-white">S</span>
               </div>
-              <span className="text-xl font-bold text-white">Signora</span>
+              <span className="text-xl font-bold text-white tracking-wide">Signora</span>
             </div>
           </div>
 
           {/* User Info */}
-          <div className="px-4 py-4 border-b border-gray-800">
+          <div 
+            className="px-4 py-4"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
+              <div 
+                className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #4da6d8 0%, #1a6fa8 100%)',
+                }}
+              >
                 <span className="text-sm font-semibold text-white">
                   {user?.name?.charAt(0) || 'U'}
                 </span>
@@ -95,7 +120,7 @@ const Sidebar = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navigation
               .filter((item) => item.show)
               .map((item) => {
@@ -105,11 +130,16 @@ const Sidebar = () => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       isActive
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                        ? 'text-white shadow-lg'
+                        : 'text-slate-300 hover:text-white'
                     }`}
+                    style={isActive ? {
+                      background: 'linear-gradient(135deg, #4da6d8 0%, #1a6fa8 100%)',
+                    } : {}}
+                    onMouseEnter={(e) => !isActive && (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                    onMouseLeave={(e) => !isActive && (e.currentTarget.style.background = 'transparent')}
                   >
                     <item.icon className="h-5 w-5" />
                     <span className="font-medium">{item.name}</span>
@@ -118,25 +148,30 @@ const Sidebar = () => {
               })}
 
             {/* Admin Section */}
-            {isSuperAdmin && (
+            {showAdminSection && (
               <>
                 <div className="pt-4 pb-2">
-                  <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Admin
                   </p>
                 </div>
-                {adminNavigation.map((item) => {
+                {adminNavigation.filter(item => item.show).map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                         isActive
-                          ? 'bg-primary-600 text-white'
-                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          ? 'text-white shadow-lg'
+                          : 'text-slate-300 hover:text-white'
                       }`}
+                      style={isActive ? {
+                        background: 'linear-gradient(135deg, #4da6d8 0%, #1a6fa8 100%)',
+                      } : {}}
+                      onMouseEnter={(e) => !isActive && (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                      onMouseLeave={(e) => !isActive && (e.currentTarget.style.background = 'transparent')}
                     >
                       <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.name}</span>
@@ -148,10 +183,15 @@ const Sidebar = () => {
           </nav>
 
           {/* Logout */}
-          <div className="px-4 py-4 border-t border-gray-800">
+          <div 
+            className="px-3 py-4"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
+          >
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white transition-all duration-300 w-full"
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <FiLogOut className="h-5 w-5" />
               <span className="font-medium">Logout</span>
@@ -163,7 +203,7 @@ const Sidebar = () => {
       {/* Overlay for mobile */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         ></div>
       )}

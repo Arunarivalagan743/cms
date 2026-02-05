@@ -36,7 +36,7 @@ import Toast from '../components/Toast';
 const ContractDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isSuperAdmin, isLegal, isFinance, isClient } = useAuth();
+  const { user, isSuperAdmin, isLegal, isFinance, isClient, hasPermission } = useAuth();
   
   const [contract, setContract] = useState(null);
   const [versions, setVersions] = useState([]);
@@ -432,16 +432,21 @@ const ContractDetails = () => {
     }
   };
 
-  // Permission checks
-  const canEdit = isLegal && (contract?.status === 'draft' || contract?.status === 'rejected');
-  const canSubmit = isLegal && contract?.status === 'draft';
-  const canApprove = (isFinance && contract?.status === 'pending_finance') ||
-    (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id);
-  const canReject = (isFinance && contract?.status === 'pending_finance') ||
-    (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id);
-  const canAmend = isLegal && contract?.status === 'rejected' && 
+  // Permission checks - now using actual permissions from database
+  const canEdit = hasPermission('canEditDraft') && (contract?.status === 'draft') ||
+    hasPermission('canEditSubmitted') && (contract?.status === 'rejected');
+  const canSubmit = hasPermission('canSubmitContract') && contract?.status === 'draft';
+  const canApprove = hasPermission('canApproveContract') && (
+    (isFinance && contract?.status === 'pending_finance') ||
+    (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id)
+  );
+  const canReject = hasPermission('canRejectContract') && (
+    (isFinance && contract?.status === 'pending_finance') ||
+    (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id)
+  );
+  const canAmend = hasPermission('canAmendContract') && contract?.status === 'rejected' && 
     contract?.createdBy?._id === user?.id;
-  const canCancel = (isClient || isSuperAdmin) && 
+  const canCancel = hasPermission('canCancelContract') && 
     ['pending_client', 'rejected'].includes(contract?.status);
 
   if (loading) {

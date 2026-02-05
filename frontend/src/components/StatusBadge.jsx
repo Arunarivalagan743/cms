@@ -1,11 +1,35 @@
 const StatusBadge = ({ status }) => {
   const styles = {
-    draft: 'bg-gray-100 text-gray-800',
-    pending_finance: 'bg-yellow-100 text-yellow-800',
-    pending_client: 'bg-blue-100 text-blue-800',
-    active: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
-    cancelled: 'bg-gray-200 text-gray-600',
+    draft: {
+      background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+      color: '#475569',
+      border: '1px solid #cbd5e1',
+    },
+    pending_finance: {
+      background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+      color: '#92400e',
+      border: '1px solid #fcd34d',
+    },
+    pending_client: {
+      background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+      color: '#1e40af',
+      border: '1px solid #93c5fd',
+    },
+    active: {
+      background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+      color: '#065f46',
+      border: '1px solid #6ee7b7',
+    },
+    rejected: {
+      background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+      color: '#991b1b',
+      border: '1px solid #fca5a5',
+    },
+    cancelled: {
+      background: 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)',
+      color: '#4b5563',
+      border: '1px solid #9ca3af',
+    },
   };
 
   const labels = {
@@ -17,8 +41,13 @@ const StatusBadge = ({ status }) => {
     cancelled: 'Cancelled',
   };
 
+  const currentStyle = styles[status] || styles.draft;
+
   return (
-    <span className={`badge ${styles[status] || styles.draft}`}>
+    <span 
+      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-sm"
+      style={currentStyle}
+    >
       {labels[status] || status}
     </span>
   );
