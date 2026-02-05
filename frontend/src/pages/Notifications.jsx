@@ -59,6 +59,8 @@ const Notifications = () => {
         return <FiXCircle className="h-6 w-6 text-red-600" />;
       case 'amendment':
         return <FiAlertCircle className="h-6 w-6 text-yellow-600" />;
+      case 'cancellation':
+        return <FiXCircle className="h-6 w-6 text-gray-600" />;
       default:
         return <FiBell className="h-6 w-6 text-gray-600" />;
     }
