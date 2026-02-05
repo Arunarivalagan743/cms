@@ -92,6 +92,11 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Database indexes for faster queries
+userSchema.index({ role: 1 });
+userSchema.index({ isActive: 1 });
+userSchema.index({ role: 1, isActive: 1 });
+
 // Generate invite token for new user to set password
 userSchema.methods.generateInviteToken = function() {
   // Generate random token

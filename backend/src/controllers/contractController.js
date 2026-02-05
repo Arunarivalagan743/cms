@@ -365,7 +365,7 @@ exports.approveContract = async (req, res, next) => {
     });
 
     // Validate based on role and status
-    if (req.user.role === 'finance') {
+    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_finance')) {
       if (currentVersion.status !== 'pending_finance') {
         return res.status(400).json({
           success: false,
@@ -382,7 +382,7 @@ exports.approveContract = async (req, res, next) => {
         });
       }
 
-      // Finance approves -> move to pending client
+      // Finance/Super Admin approves -> move to pending client
       currentVersion.status = 'pending_client';
       currentVersion.approvedByFinance = req.user._id;
       currentVersion.financeApprovedAt = new Date();
@@ -399,7 +399,7 @@ exports.approveContract = async (req, res, next) => {
         action: 'approved',
         userId: req.user._id,
         role: req.user.role,
-        remarks: 'Finance approval granted'
+        remarks: req.user.role === 'super_admin' ? 'Super Admin (Finance) approval granted' : 'Finance approval granted'
       });
 
       res.status(200).json({
@@ -408,9 +408,9 @@ exports.approveContract = async (req, res, next) => {
         data: currentVersion
       });
 
-    } else if (req.user.role === 'client') {
-      // Check if this client is assigned to this contract
-      if (contract.client.toString() !== req.user._id.toString()) {
+    } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_client') || (req.user.role === 'super_admin' && currentVersion.status === 'pending_client')) {
+      // Check if this client is assigned to this contract (skip for super_admin)
+      if (req.user.role === 'client' && contract.client.toString() !== req.user._id.toString()) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to approve this contract'
@@ -424,7 +424,7 @@ exports.approveContract = async (req, res, next) => {
         });
       }
 
-      // Client approves -> contract becomes active
+      // Client/Super Admin approves -> contract becomes active
       currentVersion.status = 'active';
       currentVersion.approvedByClient = req.user._id;
       currentVersion.clientApprovedAt = new Date();
@@ -441,7 +441,7 @@ exports.approveContract = async (req, res, next) => {
         action: 'approved',
         userId: req.user._id,
         role: req.user.role,
-        remarks: 'Client approval granted - Contract is now active'
+        remarks: req.user.role === 'super_admin' ? 'Super Admin (Client) approval granted - Contract is now active' : 'Client approval granted - Contract is now active'
       });
 
       res.status(200).json({
@@ -491,8 +491,13 @@ exports.rejectContract = async (req, res, next) => {
       isCurrent: true
     });
 
+    // Determine effective role for super_admin based on contract status
+    const effectiveRole = req.user.role === 'super_admin' 
+      ? (currentVersion.status === 'pending_finance' ? 'finance' : (currentVersion.status === 'pending_client' ? 'client' : null))
+      : req.user.role;
+
     // Validate based on role and status
-    if (req.user.role === 'finance') {
+    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_finance')) {
       if (currentVersion.status !== 'pending_finance') {
         return res.status(400).json({
           success: false,
@@ -508,8 +513,9 @@ exports.rejectContract = async (req, res, next) => {
           message: 'Conflict of interest: You cannot reject a contract you created'
         });
       }
-    } else if (req.user.role === 'client') {
-      if (contract.client.toString() !== req.user._id.toString()) {
+    } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_client')) {
+      // Client check (skip for super_admin)
+      if (req.user.role === 'client' && contract.client.toString() !== req.user._id.toString()) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to reject this contract'
@@ -534,14 +540,14 @@ exports.rejectContract = async (req, res, next) => {
     currentVersion.rejectedBy = req.user._id;
     currentVersion.rejectedAt = new Date();
     
-    // Store remarks based on who is rejecting
-    if (req.user.role === 'finance') {
-      // Finance provides both internal and client-facing remarks
+    // Store remarks based on who is rejecting (super_admin acts as effective role)
+    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && effectiveRole === 'finance')) {
+      // Finance/Super Admin (as Finance) provides both internal and client-facing remarks
       const { remarksInternal, remarksClient } = req.body;
       currentVersion.financeRemarkInternal = remarksInternal || remarks;
       currentVersion.financeRemarkClient = remarksClient || remarks;
       currentVersion.rejectionRemarks = remarksInternal || remarks; // backward compatibility - store internal
-    } else if (req.user.role === 'client') {
+    } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && effectiveRole === 'client')) {
       currentVersion.clientRemark = remarks;
       currentVersion.rejectionRemarks = remarks; // backward compatibility
     }
@@ -554,14 +560,14 @@ exports.rejectContract = async (req, res, next) => {
       : remarks;
     await notifyLegalOfRejection(contract, currentVersion, notificationRemarks);
 
-    // Notify client if Finance rejected (so they know the contract is on hold)
-    if (req.user.role === 'finance') {
+    // Notify client if Finance/Super Admin (as Finance) rejected (so they know the contract is on hold)
+    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && effectiveRole === 'finance')) {
       const clientRemarks = req.body.remarksClient || remarks;
       await notifyClientOfFinanceRejection(contract, currentVersion, clientRemarks);
     }
 
-    // Notify legal if Client rejected
-    if (req.user.role === 'client') {
+    // Notify legal if Client/Super Admin (as Client) rejected
+    if (req.user.role === 'client' || (req.user.role === 'super_admin' && effectiveRole === 'client')) {
       await notifyLegalOfClientRejection(contract, currentVersion, remarks);
     }
 

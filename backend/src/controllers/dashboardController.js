@@ -11,72 +11,61 @@ exports.getDashboardStats = async (req, res, next) => {
     const userRole = req.user.role;
 
     if (userRole === 'super_admin') {
-      // Super Admin sees everything
-      const totalContracts = await Contract.countDocuments();
-      const activeContracts = await ContractVersion.countDocuments({ status: 'active', isCurrent: true });
-      const pendingContracts = await ContractVersion.countDocuments({ 
-        status: { $in: ['pending_finance', 'pending_client'] }, 
-        isCurrent: true 
-      });
-      const rejectedContracts = await ContractVersion.countDocuments({ status: 'rejected', isCurrent: true });
-      const draftContracts = await ContractVersion.countDocuments({ status: 'draft', isCurrent: true });
+      // Super Admin sees everything - use aggregation for single query
+      const [contractStats, totalContracts] = await Promise.all([
+        ContractVersion.aggregate([
+          { $match: { isCurrent: true } },
+          { $group: { 
+            _id: '$status', 
+            count: { $sum: 1 } 
+          }}
+        ]),
+        Contract.countDocuments()
+      ]);
+
+      const statusCounts = {};
+      contractStats.forEach(s => { statusCounts[s._id] = s.count; });
 
       stats = {
         totalContracts,
-        activeContracts,
-        pendingContracts,
-        rejectedContracts,
-        draftContracts
+        activeContracts: statusCounts.active || 0,
+        pendingContracts: (statusCounts.pending_finance || 0) + (statusCounts.pending_client || 0),
+        rejectedContracts: statusCounts.rejected || 0,
+        draftContracts: statusCounts.draft || 0
       };
 
     } else if (userRole === 'legal') {
-      // Legal sees their own contracts
-      const myContracts = await Contract.find({ createdBy: req.user._id });
-      const contractIds = myContracts.map(c => c._id);
+      // Legal sees their own contracts - use aggregation
+      const contractIds = await Contract.find({ createdBy: req.user._id }).distinct('_id');
+      
+      const [contractStats] = await Promise.all([
+        ContractVersion.aggregate([
+          { $match: { contract: { $in: contractIds }, isCurrent: true } },
+          { $group: { 
+            _id: '$status', 
+            count: { $sum: 1 } 
+          }}
+        ])
+      ]);
 
-      const totalContracts = myContracts.length;
-      const activeContracts = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: 'active', 
-        isCurrent: true 
-      });
-      const pendingContracts = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: { $in: ['pending_finance', 'pending_client'] }, 
-        isCurrent: true 
-      });
-      const rejectedContracts = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: 'rejected', 
-        isCurrent: true 
-      });
-      const draftContracts = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: 'draft', 
-        isCurrent: true 
-      });
+      const statusCounts = {};
+      contractStats.forEach(s => { statusCounts[s._id] = s.count; });
 
       stats = {
-        totalContracts,
-        activeContracts,
-        pendingContracts,
-        rejectedContracts,
-        draftContracts
+        totalContracts: contractIds.length,
+        activeContracts: statusCounts.active || 0,
+        pendingContracts: (statusCounts.pending_finance || 0) + (statusCounts.pending_client || 0),
+        rejectedContracts: statusCounts.rejected || 0,
+        draftContracts: statusCounts.draft || 0
       };
 
     } else if (userRole === 'finance') {
-      // Finance sees contracts pending their review
-      const pendingFinance = await ContractVersion.countDocuments({ 
-        status: 'pending_finance', 
-        isCurrent: true 
-      });
-      const approvedByMe = await ContractVersion.countDocuments({ 
-        approvedByFinance: req.user._id 
-      });
-      const totalActive = await ContractVersion.countDocuments({ 
-        status: 'active', 
-        isCurrent: true 
-      });
+      // Finance sees contracts pending their review - parallel queries
+      const [pendingFinance, approvedByMe, totalActive] = await Promise.all([
+        ContractVersion.countDocuments({ status: 'pending_finance', isCurrent: true }),
+        ContractVersion.countDocuments({ approvedByFinance: req.user._id }),
+        ContractVersion.countDocuments({ status: 'active', isCurrent: true })
+      ]);
 
       stats = {
         pendingReview: pendingFinance,
@@ -87,47 +76,40 @@ exports.getDashboardStats = async (req, res, next) => {
       // If user was previously Legal, also show their created contracts
       const previousRoles = req.user.previousRoles?.map(pr => pr.role) || [];
       if (previousRoles.includes('legal')) {
-        const myCreatedContracts = await Contract.find({ createdBy: req.user._id });
-        const createdContractIds = myCreatedContracts.map(c => c._id);
+        const createdContractIds = await Contract.find({ createdBy: req.user._id }).distinct('_id');
+        const activeFromCreated = await ContractVersion.countDocuments({
+          contract: { $in: createdContractIds },
+          status: 'active',
+          isCurrent: true
+        });
         
         stats.previousRoleStats = {
           previousRole: 'legal',
-          contractsCreated: myCreatedContracts.length,
-          activeFromCreated: await ContractVersion.countDocuments({
-            contract: { $in: createdContractIds },
-            status: 'active',
-            isCurrent: true
-          })
+          contractsCreated: createdContractIds.length,
+          activeFromCreated
         };
       }
 
     } else if (userRole === 'client') {
-      // Client sees only their contracts
-      const myContracts = await Contract.find({ client: req.user._id });
-      const contractIds = myContracts.map(c => c._id);
+      // Client sees only their contracts - use aggregation
+      const contractIds = await Contract.find({ client: req.user._id }).distinct('_id');
 
-      const totalContracts = myContracts.length;
-      const activeContracts = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: 'active', 
-        isCurrent: true 
-      });
-      const pendingApproval = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: 'pending_client', 
-        isCurrent: true 
-      });
-      const rejectedContracts = await ContractVersion.countDocuments({ 
-        contract: { $in: contractIds }, 
-        status: 'rejected', 
-        isCurrent: true 
-      });
+      const contractStats = await ContractVersion.aggregate([
+        { $match: { contract: { $in: contractIds }, isCurrent: true } },
+        { $group: { 
+          _id: '$status', 
+          count: { $sum: 1 } 
+        }}
+      ]);
+
+      const statusCounts = {};
+      contractStats.forEach(s => { statusCounts[s._id] = s.count; });
 
       stats = {
-        totalContracts,
-        activeContracts,
-        pendingApproval,
-        rejectedContracts
+        totalContracts: contractIds.length,
+        activeContracts: statusCounts.active || 0,
+        pendingApproval: statusCounts.pending_client || 0,
+        rejectedContracts: statusCounts.rejected || 0
       };
     }
 

@@ -331,9 +331,13 @@ const ContractDetails = () => {
     setActionLoading(true);
     try {
       await approveContract(id);
-      const message = isFinance 
-        ? 'Contract approved, pending client approval' 
-        : 'Contract approved and is now active';
+      // Determine message based on current status and role
+      let message;
+      if (contract?.status === 'pending_finance') {
+        message = 'Contract approved, pending client approval';
+      } else {
+        message = 'Contract approved and is now active';
+      }
       showToast(message, 'success');
       await fetchContractData();
     } catch (error) {
@@ -343,9 +347,12 @@ const ContractDetails = () => {
     }
   };
 
+  // Determine if we need finance-style rejection (internal + client remarks) based on contract status
+  const needsFinanceStyleReject = contract?.status === 'pending_finance';
+
   const handleReject = async () => {
-    // Finance needs both internal and client remarks
-    if (isFinance) {
+    // Finance-style rejection needs both internal and client remarks (also for super_admin when status is pending_finance)
+    if (needsFinanceStyleReject) {
       if (!financeRemarkInternal.trim()) {
         showToast('Internal remarks are required', 'error');
         return;
@@ -363,7 +370,7 @@ const ContractDetails = () => {
     
     setActionLoading(true);
     try {
-      if (isFinance) {
+      if (needsFinanceStyleReject) {
         await rejectContract(id, { remarksInternal: financeRemarkInternal, remarksClient: financeRemarkClient });
       } else {
         await rejectContract(id, { remarks: rejectRemarks });
@@ -436,11 +443,15 @@ const ContractDetails = () => {
   const canEdit = hasPermission('canEditDraft') && (contract?.status === 'draft') ||
     hasPermission('canEditSubmitted') && (contract?.status === 'rejected');
   const canSubmit = hasPermission('canSubmitContract') && contract?.status === 'draft';
+  
+  // Super Admin can approve/reject any contract in pending_finance or pending_client status
   const canApprove = hasPermission('canApproveContract') && (
+    (isSuperAdmin && ['pending_finance', 'pending_client'].includes(contract?.status)) ||
     (isFinance && contract?.status === 'pending_finance') ||
     (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id)
   );
   const canReject = hasPermission('canRejectContract') && (
+    (isSuperAdmin && ['pending_finance', 'pending_client'].includes(contract?.status)) ||
     (isFinance && contract?.status === 'pending_finance') ||
     (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id)
   );
@@ -996,12 +1007,12 @@ const ContractDetails = () => {
         title="Reject Contract"
       >
         <div className="space-y-4">
-          {/* Finance gets TWO fields: Internal + Client-facing */}
-          {isFinance ? (
+          {/* Finance-style rejection (pending_finance): TWO fields - Internal + Client-facing */}
+          {needsFinanceStyleReject ? (
             <>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <p className="text-sm text-amber-800">
-                  <strong>Note:</strong> As Finance, you need to provide two types of remarks:
+                  <strong>Note:</strong> For Finance rejection, you need to provide two types of remarks:
                 </p>
                 <ul className="text-sm text-amber-700 mt-1 list-disc list-inside">
                   <li><strong>Internal Remarks:</strong> Detailed reason (visible to Legal & Admin only)</li>
@@ -1066,7 +1077,7 @@ const ContractDetails = () => {
             </button>
             <button
               onClick={handleReject}
-              disabled={actionLoading || (isFinance ? (!financeRemarkInternal.trim() || !financeRemarkClient.trim()) : !rejectRemarks.trim())}
+              disabled={actionLoading || (needsFinanceStyleReject ? (!financeRemarkInternal.trim() || !financeRemarkClient.trim()) : !rejectRemarks.trim())}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {actionLoading ? 'Rejecting...' : 'Reject Contract'}

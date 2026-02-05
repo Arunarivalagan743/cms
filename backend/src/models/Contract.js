@@ -46,6 +46,14 @@ const contractSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Database indexes for faster queries
+contractSchema.index({ client: 1 });
+contractSchema.index({ createdBy: 1 });
+contractSchema.index({ createdAt: -1 });
+contractSchema.index({ contractNumber: 1 });
+contractSchema.index({ client: 1, createdAt: -1 });
+contractSchema.index({ createdBy: 1, createdAt: -1 });
+
 // Auto-generate contract number before validation
 contractSchema.pre('validate', async function() {
   if (this.isNew && !this.contractNumber) {

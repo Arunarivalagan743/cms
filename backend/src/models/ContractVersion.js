@@ -97,5 +97,12 @@ const contractVersionSchema = new mongoose.Schema({
 
 // Compound index for contract + version uniqueness
 contractVersionSchema.index({ contract: 1, versionNumber: 1 }, { unique: true });
+// Performance indexes for frequent queries
+contractVersionSchema.index({ status: 1, isCurrent: 1 });
+contractVersionSchema.index({ contract: 1, isCurrent: 1 });
+contractVersionSchema.index({ status: 1, isCurrent: 1, createdAt: -1 });
+contractVersionSchema.index({ approvedByFinance: 1 });
+contractVersionSchema.index({ approvedByClient: 1 });
+contractVersionSchema.index({ createdBy: 1 });
 
 module.exports = mongoose.model('ContractVersion', contractVersionSchema);

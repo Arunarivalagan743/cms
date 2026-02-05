@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { getCurrentUser } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -34,10 +34,14 @@ const defaultPermissions = {
   canViewReports: false,
 };
 
+// Permission refresh interval (5 minutes)
+const PERMISSION_REFRESH_INTERVAL = 5 * 60 * 1000;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [permissions, setPermissions] = useState(defaultPermissions);
   const [loading, setLoading] = useState(true);
+  const lastRefreshRef = useRef(Date.now());
 
   // Helper to check if user has a specific permission
   const hasPermission = useCallback((permissionKey) => {
@@ -57,6 +61,36 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     loadUser();
   }, []);
+
+  // Auto-refresh permissions when page becomes visible or periodically
+  useEffect(() => {
+    if (!user) return;
+
+    // Refresh when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        // Only refresh if more than 30 seconds since last refresh
+        if (now - lastRefreshRef.current > 30000) {
+          refreshPermissions();
+        }
+      }
+    };
+
+    // Periodic refresh
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshPermissions();
+      }
+    }, PERMISSION_REFRESH_INTERVAL);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(intervalId);
+    };
+  }, [user]);
 
   const loadUser = async () => {
     const token = localStorage.getItem('token');
@@ -126,6 +160,7 @@ export const AuthProvider = ({ children }) => {
         setPermissions({ ...defaultPermissions, ...userData.permissions });
       }
       localStorage.setItem('user', JSON.stringify(userData));
+      lastRefreshRef.current = Date.now();
     } catch (error) {
       console.error('Failed to refresh permissions:', error);
     }

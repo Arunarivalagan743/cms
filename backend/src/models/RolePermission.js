@@ -47,4 +47,7 @@ const rolePermissionSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Index for fast role lookups
+rolePermissionSchema.index({ role: 1 });
+
 module.exports = mongoose.model('RolePermission', rolePermissionSchema);
