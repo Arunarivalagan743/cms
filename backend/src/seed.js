@@ -143,6 +143,38 @@ const seedDatabase = async () => {
     console.log('✓ Role permissions created for all roles');
 
     // ============================================
+    // STEP 1.7: Create Workflow Configurations
+    // ============================================
+    console.log('\n⚙️  Creating workflow configurations...');
+
+    // Standard 3-stage workflow (default/active)
+    const standardWorkflow = await WorkflowConfig.create({
+      name: 'Standard Approval Workflow',
+      description: 'Default 3-stage approval: Legal → Finance → Client',
+      version: 1,
+      isActive: true,
+      steps: [
+        { order: 1, name: 'Legal Submission', role: 'legal', action: 'submit', canSkip: false, isActive: true },
+        { order: 2, name: 'Finance Review', role: 'finance', action: 'approve', canSkip: false, isActive: true },
+        { order: 3, name: 'Client Approval', role: 'client', action: 'final_approve', canSkip: false, isActive: true },
+      ],
+    });
+    console.log(`✓ Workflow: ${standardWorkflow.name} (Default)`);
+
+    // Direct Client workflow (skips Finance)
+    const directClientWorkflow = await WorkflowConfig.create({
+      name: 'Direct Client Workflow',
+      description: 'Simple 2-stage approval: Legal → Client (skips Finance review)',
+      version: 1,
+      isActive: false,
+      steps: [
+        { order: 1, name: 'Legal Submission', role: 'legal', action: 'submit', canSkip: false, isActive: true },
+        { order: 2, name: 'Client Approval', role: 'client', action: 'final_approve', canSkip: false, isActive: true },
+      ],
+    });
+    console.log(`✓ Workflow: ${directClientWorkflow.name}`);
+
+    // ============================================
     // STEP 2: Create Professional Users
     // ============================================
     console.log('\n👥 Creating users...');
@@ -577,6 +609,62 @@ const seedDatabase = async () => {
     await contract10.save();
     console.log(`✓ ${contract10.contractNumber}: ${version10_2.contractName} - V1 CLIENT REJECTED, V2 PENDING CLIENT ⏳`);
 
+    // CONTRACT 11: DIRECT CLIENT WORKFLOW - Uses simplified Legal → Client workflow (no Finance review)
+    const contract11 = await Contract.create({
+      contractNumber: 'CON-000011',
+      client: client._id,
+      createdBy: legalUser._id,
+      workflowId: directClientWorkflow._id,
+      workflowVersion: directClientWorkflow.version
+    });
+
+    // Version 1 - Active (approved directly by client, no Finance)
+    const version11_1 = await ContractVersion.create({
+      contract: contract11._id,
+      versionNumber: 1,
+      contractName: 'Express Delivery Service Agreement',
+      clientEmail: client.email,
+      effectiveDate: new Date('2026-09-01'),
+      amount: 35000,
+      status: 'active',
+      isCurrent: true,
+      submittedAt: new Date('2026-01-28T10:00:00'),
+      // No Finance approval - goes directly to client
+      approvedByClient: client._id,
+      clientApprovedAt: new Date('2026-01-30T14:00:00'),
+      createdBy: legalUser._id
+    });
+    contract11.currentVersionId = version11_1._id;
+    await contract11.save();
+    console.log(`✓ ${contract11.contractNumber}: ${version11_1.contractName} - DIRECT CLIENT WORKFLOW ✅ (Legal → Client)`);
+
+    // CONTRACT 12: DIRECT CLIENT WORKFLOW - Pending Client
+    const contract12 = await Contract.create({
+      contractNumber: 'CON-000012',
+      client: client._id,
+      createdBy: legalUser._id,
+      workflowId: directClientWorkflow._id,
+      workflowVersion: directClientWorkflow.version
+    });
+
+    // Version 1 - Pending Client (no Finance review needed)
+    const version12_1 = await ContractVersion.create({
+      contract: contract12._id,
+      versionNumber: 1,
+      contractName: 'Seasonal Promotional Materials Contract',
+      clientEmail: client.email,
+      effectiveDate: new Date('2026-10-01'),
+      amount: 18000,
+      status: 'pending_client',
+      isCurrent: true,
+      submittedAt: new Date('2026-02-03T09:00:00'),
+      // Goes directly to client - skipping Finance
+      createdBy: legalUser._id
+    });
+    contract12.currentVersionId = version12_1._id;
+    await contract12.save();
+    console.log(`✓ ${contract12.contractNumber}: ${version12_1.contractName} - DIRECT CLIENT WORKFLOW ⏳ (Pending Client)`);
+
     // ============================================
     // STEP 4: Create Audit Logs
     // ============================================
@@ -656,6 +744,15 @@ const seedDatabase = async () => {
       { contract: contract10._id, contractVersion: version10_2._id, action: 'amended', performedBy: legalUser._id, roleAtTime: 'legal', metadata: { previousVersion: 1, newVersion: 2 }, createdAt: new Date('2026-01-20T09:00:00') },
       { contract: contract10._id, contractVersion: version10_2._id, action: 'submitted', performedBy: legalUser._id, roleAtTime: 'legal', createdAt: new Date('2026-01-20T10:00:00') },
       { contract: contract10._id, contractVersion: version10_2._id, action: 'approved', performedBy: financeUser._id, roleAtTime: 'finance', metadata: { approver: 'finance' }, createdAt: new Date('2026-01-22T11:00:00') },
+      
+      // Contract 11 - Direct Client Workflow (Active - no Finance review)
+      { contract: contract11._id, contractVersion: version11_1._id, action: 'created', performedBy: legalUser._id, roleAtTime: 'legal', metadata: { workflow: 'Direct Client Workflow' }, createdAt: new Date('2026-01-28T09:00:00') },
+      { contract: contract11._id, contractVersion: version11_1._id, action: 'submitted', performedBy: legalUser._id, roleAtTime: 'legal', createdAt: new Date('2026-01-28T10:00:00') },
+      { contract: contract11._id, contractVersion: version11_1._id, action: 'approved', performedBy: client._id, roleAtTime: 'client', metadata: { approver: 'client', workflow: 'Direct Client - No Finance Review' }, createdAt: new Date('2026-01-30T14:00:00') },
+      
+      // Contract 12 - Direct Client Workflow (Pending Client)
+      { contract: contract12._id, contractVersion: version12_1._id, action: 'created', performedBy: legalUser._id, roleAtTime: 'legal', metadata: { workflow: 'Direct Client Workflow' }, createdAt: new Date('2026-02-03T08:00:00') },
+      { contract: contract12._id, contractVersion: version12_1._id, action: 'submitted', performedBy: legalUser._id, roleAtTime: 'legal', createdAt: new Date('2026-02-03T09:00:00') },
     ];
 
     await AuditLog.insertMany(auditLogs);
@@ -706,10 +803,19 @@ const seedDatabase = async () => {
 
     console.log('\n📊 SUMMARY:');
     console.log(`   Users: 4 (1 Super Admin, 1 Finance, 1 Legal, 1 Client)`);
-    console.log(`   Contracts: 10 (with various statuses)`);
-    console.log(`   Contract Versions: 16 total`);
+    console.log(`   Workflows: 2 (Standard 3-stage, Direct Client)`);
+    console.log(`   Contracts: 12 (with various statuses)`);
+    console.log(`   Contract Versions: 18 total`);
     console.log(`   Audit Logs: ${auditLogs.length} entries`);
     console.log(`   Notifications: 18`);
+
+    console.log('\n' + '='.repeat(60));
+    console.log('⚙️  WORKFLOW CONFIGURATIONS:');
+    console.log('='.repeat(60));
+    console.log('\n1️⃣  Standard Approval Workflow (DEFAULT):');
+    console.log('   Legal Submission → Finance Review → Client Approval');
+    console.log('\n2️⃣  Direct Client Workflow:');
+    console.log('   Legal Submission → Client Approval (No Finance)');
 
     console.log('\n' + '='.repeat(60));
     console.log('🔐 LOGIN CREDENTIALS:');
@@ -738,7 +844,8 @@ const seedDatabase = async () => {
     console.log('\n' + '='.repeat(60));
     console.log('📋 CONTRACT STATUS OVERVIEW:');
     console.log('='.repeat(60));
-    console.log('\n✅ CON-000001: ACTIVE - Pastry Equipment (Fully Approved)');
+    console.log('\n--- STANDARD WORKFLOW CONTRACTS ---');
+    console.log('✅ CON-000001: ACTIVE - Pastry Equipment (Fully Approved)');
     console.log('⏳ CON-000002: PENDING FINANCE - Kitchen Renovation');
     console.log('⏳ CON-000003: PENDING CLIENT - Ingredient Supply');
     console.log('🔄 CON-000004: V1 REJECTED by Finance → V2 PENDING FINANCE');
@@ -748,6 +855,9 @@ const seedDatabase = async () => {
     console.log('🔄 CON-000008: V1 FIN REJ → V2 CLIENT REJ → V3 PENDING CLIENT');
     console.log('📝 CON-000009: V1 FIN REJ (sent to client) → V2 FIN REJ (no client msg) → V3 PENDING FINANCE');
     console.log('⏳ CON-000010: V1 CLIENT REJ → V2 PENDING CLIENT');
+    console.log('\n--- DIRECT CLIENT WORKFLOW CONTRACTS (No Finance) ---');
+    console.log('✅ CON-000011: ACTIVE - Express Delivery (Direct to Client)');
+    console.log('⏳ CON-000012: PENDING CLIENT - Seasonal Promotional (Direct to Client)');
 
     console.log('\n' + '='.repeat(60));
     console.log('✨ Ready for production use!');

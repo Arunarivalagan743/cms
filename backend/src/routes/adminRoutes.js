@@ -18,6 +18,9 @@ router.use(protect);
 
 // ==================== WORKFLOW ROUTES ====================
 
+// Get all available workflows for contract creation (accessible to all authenticated users)
+router.get('/workflows/available', getWorkflows);
+
 // Get default/active workflow (accessible to all authenticated users for reference)
 router.get('/workflows/default', getDefaultWorkflow);
 router.get('/workflows/active', getActiveWorkflow);

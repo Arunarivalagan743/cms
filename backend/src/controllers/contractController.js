@@ -154,14 +154,28 @@ exports.getContract = async (req, res, next) => {
 // @access  Private/Legal
 exports.createContract = async (req, res, next) => {
   try {
-    const { contractName, client, clientEmail, effectiveDate, amount } = req.body;
+    const { contractName, client, clientEmail, effectiveDate, amount, workflowId } = req.body;
 
-    // Get the currently active workflow - LOCK IT to this contract
-    let activeWorkflow = await WorkflowConfig.findOne({ isActive: true });
+    // Get the workflow - either selected one or active one
+    let selectedWorkflow;
+    
+    if (workflowId) {
+      // User selected a specific workflow
+      selectedWorkflow = await WorkflowConfig.findById(workflowId);
+      if (!selectedWorkflow) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected workflow not found'
+        });
+      }
+    } else {
+      // Use the currently active workflow
+      selectedWorkflow = await WorkflowConfig.findOne({ isActive: true });
+    }
     
     // If no workflow exists, create default one
-    if (!activeWorkflow) {
-      activeWorkflow = await WorkflowConfig.create({
+    if (!selectedWorkflow) {
+      selectedWorkflow = await WorkflowConfig.create({
         name: 'Standard Approval Workflow',
         description: 'Default 3-stage approval: Legal → Finance → Client',
         version: 1,
@@ -178,8 +192,8 @@ exports.createContract = async (req, res, next) => {
     const contract = await Contract.create({
       client,
       createdBy: req.user._id,
-      workflowId: activeWorkflow._id,
-      workflowVersion: activeWorkflow.version,
+      workflowId: selectedWorkflow._id,
+      workflowVersion: selectedWorkflow.version,
       currentStep: 1  // Start at first step (Legal submission)
     });
 
@@ -323,8 +337,35 @@ exports.submitContract = async (req, res, next) => {
       });
     }
 
-    // Update status to pending finance review
-    currentVersion.status = 'pending_finance';
+    // Check the workflow to determine next step
+    let nextStatus = 'pending_finance'; // Default
+    let notifyFinance = true;
+    let notifyClient = false;
+
+    if (contract.workflowId) {
+      const workflow = await WorkflowConfig.findById(contract.workflowId);
+      if (workflow) {
+        // Get active steps sorted by order
+        const activeSteps = workflow.steps
+          .filter(s => s.isActive)
+          .sort((a, b) => a.order - b.order);
+        
+        // Find the step after Legal submission
+        const hasFinanceStep = activeSteps.some(s => s.role === 'finance');
+        const hasClientStep = activeSteps.some(s => s.role === 'client');
+        
+        if (!hasFinanceStep && hasClientStep) {
+          // Direct to client workflow - skip finance
+          nextStatus = 'pending_client';
+          notifyFinance = false;
+          notifyClient = true;
+        }
+      }
+    }
+
+    // Update status based on workflow
+    currentVersion.status = nextStatus;
+    currentVersion.submittedAt = new Date();
     await currentVersion.save();
 
     // Create audit log
@@ -336,12 +377,21 @@ exports.submitContract = async (req, res, next) => {
       role: req.user.role
     });
 
-    // Notify finance reviewers
-    await notifyFinanceOfSubmission(contract, currentVersion);
+    // Notify based on workflow
+    if (notifyFinance) {
+      await notifyFinanceOfSubmission(contract, currentVersion);
+    }
+    if (notifyClient) {
+      await notifyClientOfPendingApproval(contract, currentVersion);
+    }
+
+    const message = nextStatus === 'pending_client' 
+      ? 'Contract submitted directly to client for approval'
+      : 'Contract submitted for finance review';
 
     res.status(200).json({
       success: true,
-      message: 'Contract submitted for finance review',
+      message,
       data: currentVersion
     });
   } catch (error) {
