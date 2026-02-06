@@ -17,7 +17,12 @@ app.use(express.json());
 
 // Enable CORS
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:5173', 
+    'http://localhost:5174',
+    'https://cms-three-red.vercel.app'
+  ],
   credentials: true
 }));
 
