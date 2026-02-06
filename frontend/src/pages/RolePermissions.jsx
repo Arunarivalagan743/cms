@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import {
   FiShield,
   FiSave,
@@ -151,8 +151,8 @@ const RolePermissions = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {Object.entries(permissionGroups).map(([groupName, groupPermissions]) => (
-              <>
-                <tr key={groupName} className="bg-gray-100">
+              <Fragment key={groupName}>
+                <tr className="bg-gray-100">
                   <td colSpan={roles.length + 1} className="px-4 py-2">
                     <div className="flex items-center gap-2">
                       <FiShield className="h-4 w-4 text-gray-500" />
@@ -197,7 +197,7 @@ const RolePermissions = () => {
                     })}
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

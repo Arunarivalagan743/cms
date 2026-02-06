@@ -68,7 +68,7 @@ const Notifications = () => {
 
   const filteredNotifications =
     filter === 'unread'
-      ? notifications.filter((n) => !n.read)
+      ? notifications.filter((n) => !n.isRead)
       : notifications;
 
   if (loading) {
@@ -79,8 +79,8 @@ const Notifications = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
-        {notifications.some((n) => !n.read) && (
+        <h2 className="text-2xl font-semibold text-slate-800">Notifications</h2>
+        {notifications.some((n) => !n.isRead) && (
           <button onClick={handleMarkAllAsRead} className="btn-secondary">
             Mark all as read
           </button>
@@ -130,9 +130,9 @@ const Notifications = () => {
             <div
               key={notification._id}
               className={`card hover:shadow-md transition-shadow cursor-pointer ${
-                notification.read ? 'bg-white' : 'bg-blue-50 border-blue-200'
+                notification.isRead ? 'bg-white' : 'border-primary-200'
               }`}
-              onClick={() => !notification.read && handleMarkAsRead(notification._id)}
+              onClick={() => !notification.isRead && handleMarkAsRead(notification._id)}
             >
               <div className="flex gap-4">
                 <div className="flex-shrink-0 mt-1">
@@ -151,8 +151,8 @@ const Notifications = () => {
                         {formatTimeAgo(notification.createdAt)}
                       </p>
                     </div>
-                    {!notification.read && (
-                      <span className="inline-block w-2 h-2 bg-blue-600 rounded-full ml-2"></span>
+                    {!notification.isRead && (
+                      <span className="inline-block w-2 h-2 bg-primary-500 rounded-full ml-2"></span>
                     )}
                   </div>
                 </div>

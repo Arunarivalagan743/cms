@@ -5,6 +5,10 @@ import {
   FiPlus,
   FiFilter,
   FiFileText,
+  FiX,
+  FiRefreshCw,
+  FiMail,
+  FiUser,
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { getContracts } from '../services/contractService';
@@ -14,11 +18,23 @@ import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
 
 const ContractList = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, isSuperAdmin, isLegal, isFinance, isClient } = useAuth();
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    amountMin: '',
+    amountMax: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+    clientName: '',
+    clientEmail: '',
+    versionFilter: '',
+  });
   const fetchedRef = useRef(false);
 
   useEffect(() => {
@@ -60,13 +76,68 @@ const ContractList = () => {
     }
   };
 
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      dateFrom: '',
+      dateTo: '',
+      amountMin: '',
+      amountMax: '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      clientName: '',
+      clientEmail: '',
+      versionFilter: '',
+    });
+    setStatusFilter('');
+    setSearchTerm('');
+  };
+
+  // Get unique versions for filter dropdown
+  const uniqueVersions = [...new Set(contracts.map(c => c.versionNumber))].sort((a, b) => a - b);
+
   const filteredContracts = contracts.filter((contract) => {
     const matchesSearch =
       contract.contractName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.contractNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.client?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      contract.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.client?.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch;
+    // Date filters
+    const contractDate = new Date(contract.effectiveDate);
+    const matchesDateFrom = !filters.dateFrom || contractDate >= new Date(filters.dateFrom);
+    const matchesDateTo = !filters.dateTo || contractDate <= new Date(filters.dateTo);
+
+    // Amount filters
+    const matchesAmountMin = !filters.amountMin || contract.amount >= parseFloat(filters.amountMin);
+    const matchesAmountMax = !filters.amountMax || contract.amount <= parseFloat(filters.amountMax);
+
+    // Client name filter
+    const matchesClientName = !filters.clientName || 
+      contract.client?.name?.toLowerCase().includes(filters.clientName.toLowerCase());
+
+    // Client email filter
+    const matchesClientEmail = !filters.clientEmail || 
+      contract.client?.email?.toLowerCase().includes(filters.clientEmail.toLowerCase());
+
+    // Version filter
+    const matchesVersion = !filters.versionFilter || 
+      contract.versionNumber === parseInt(filters.versionFilter);
+
+    return matchesSearch && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax && matchesClientName && matchesClientEmail && matchesVersion;
+  }).sort((a, b) => {
+    const sortKey = filters.sortBy;
+    const order = filters.sortOrder === 'asc' ? 1 : -1;
+    if (sortKey === 'amount' || sortKey === 'versionNumber') {
+      return ((a[sortKey] || 0) - (b[sortKey] || 0)) * order;
+    }
+    if (sortKey === 'effectiveDate' || sortKey === 'createdAt') {
+      return (new Date(a[sortKey]) - new Date(b[sortKey])) * order;
+    }
+    return (a[sortKey] || '').localeCompare(b[sortKey] || '') * order;
   });
 
   if (loading) {
@@ -77,53 +148,47 @@ const ContractList = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 
-          className="text-2xl font-bold"
-          style={{ 
-            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
+        <h2 className="text-2xl font-semibold text-slate-800">
           Contracts
         </h2>
-        {hasPermission('canCreateContract') && (
-          <Link to="/contracts/new" className="btn-primary flex items-center gap-2 justify-center">
-            <FiPlus className="h-5 w-5" />
-            Create Contract
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'bg-slate-200' : ''}`}
+          >
+            <FiFilter className="h-4 w-4" />
+            Filters
+          </button>
+          {hasPermission('canCreateContract') && (
+            <Link to="/contracts/new" className="btn-primary flex items-center gap-2 justify-center">
+              <FiPlus className="h-5 w-5" />
+              Create Contract
+            </Link>
+          )}
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* Search and Status */}
       <div className="card">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <div 
-              className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center rounded-l-lg"
-              style={{ background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)' }}
-            >
-              <FiSearch className="text-slate-500 h-5 w-5" />
-            </div>
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search by name, number, or client..."
-              className="input-field pl-12"
+              className="input-field pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           {/* Status Filter */}
-          <div className="sm:w-64">
+          <div className="sm:w-48">
             <select
               className="input-field cursor-pointer"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ 
-                background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-              }}
             >
               <option value="">All Statuses</option>
               <option value="draft">Draft</option>
@@ -131,10 +196,140 @@ const ContractList = () => {
               <option value="pending_client">Pending Client</option>
               <option value="active">Active</option>
               <option value="rejected">Rejected</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
       </div>
+
+      {/* Advanced Filters */}
+      {showFilters && (
+        <div className="card">
+          <h4 className="text-sm font-semibold text-slate-700 mb-4">Advanced Filters</h4>
+          
+          {/* Row 1: Client filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                <FiUser className="inline h-3 w-3 mr-1" />
+                Client Name
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Filter by client name..."
+                value={filters.clientName}
+                onChange={(e) => handleFilterChange('clientName', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                <FiMail className="inline h-3 w-3 mr-1" />
+                Client Email
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Filter by email..."
+                value={filters.clientEmail}
+                onChange={(e) => handleFilterChange('clientEmail', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                <FiRefreshCw className="inline h-3 w-3 mr-1" />
+                Version
+              </label>
+              <select
+                className="input-field"
+                value={filters.versionFilter}
+                onChange={(e) => handleFilterChange('versionFilter', e.target.value)}
+              >
+                <option value="">All Versions</option>
+                {uniqueVersions.map(v => (
+                  <option key={v} value={v}>Version {v}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Sort By</label>
+              <select
+                className="input-field"
+                value={filters.sortBy}
+                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+              >
+                <option value="createdAt">Created Date</option>
+                <option value="effectiveDate">Effective Date</option>
+                <option value="amount">Amount</option>
+                <option value="contractName">Name</option>
+                <option value="versionNumber">Version</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Row 2: Date and Amount filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Date From</label>
+              <input
+                type="date"
+                className="input-field"
+                value={filters.dateFrom}
+                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Date To</label>
+              <input
+                type="date"
+                className="input-field"
+                value={filters.dateTo}
+                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Min Amount</label>
+              <input
+                type="number"
+                className="input-field"
+                placeholder="0"
+                value={filters.amountMin}
+                onChange={(e) => handleFilterChange('amountMin', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Max Amount</label>
+              <input
+                type="number"
+                className="input-field"
+                placeholder="Any"
+                value={filters.amountMax}
+                onChange={(e) => handleFilterChange('amountMax', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Order</label>
+              <select
+                className="input-field"
+                value={filters.sortOrder}
+                onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
+              >
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-between items-center">
+            <p className="text-sm text-slate-500">
+              Showing {filteredContracts.length} of {contracts.length} contracts
+            </p>
+            <button onClick={clearFilters} className="btn-secondary flex items-center gap-2">
+              <FiX className="h-4 w-4" />
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Contract List */}
       {filteredContracts.length === 0 ? (
@@ -142,7 +337,7 @@ const ContractList = () => {
           icon={FiFileText}
           title="No contracts found"
           description={
-            searchTerm || statusFilter
+            searchTerm || statusFilter || filters.dateFrom || filters.amountMin
               ? 'Try adjusting your search or filter criteria'
               : 'Create your first contract to get started'
           }
@@ -160,72 +355,84 @@ const ContractList = () => {
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr style={{ background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)' }}>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Contract
                   </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Client
                   </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
-                    Amount
-                  </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Version
                   </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Effective Date
                   </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Created Date
+                  </th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Status
                   </th>
-                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y" style={{ borderColor: 'rgba(226, 232, 240, 0.8)' }}>
+              <tbody className="divide-y divide-slate-200">
                 {filteredContracts.map((contract) => (
                   <tr 
                     key={contract._id} 
-                    className="transition-all duration-200"
-                    style={{ background: 'transparent' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, rgba(96, 165, 250, 0.05) 0%, rgba(96, 165, 250, 0.1) 50%, rgba(96, 165, 250, 0.05) 100%)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-4 py-4">
                       <div>
-                        <p className="text-sm font-medium" style={{ color: '#1e3a5f' }}>
+                        <p className="text-sm font-medium text-slate-800">
                           {contract.contractName}
                         </p>
-                        <p className="text-xs" style={{ color: '#94a3b8' }}>{contract.contractNumber}</p>
+                        <p className="text-xs text-slate-400">{contract.contractNumber}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm" style={{ color: '#334155' }}>
-                      {contract.client?.name || 'N/A'}
-                    </td>
-                    <td className="px-4 py-4 text-sm font-medium" style={{ color: '#1e3a5f' }}>
-                      {formatCurrency(contract.amount)}
+                    <td className="px-4 py-4">
+                      <div>
+                        <p className="text-sm text-slate-700 font-medium">
+                          {contract.client?.name || 'N/A'}
+                        </p>
+                        <p className="text-xs text-slate-400 flex items-center gap-1">
+                          <FiMail className="h-3 w-3" />
+                          {contract.client?.email || 'N/A'}
+                        </p>
+                      </div>
                     </td>
                     <td className="px-4 py-4">
-                      <span 
-                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm"
-                        style={contract.versionNumber > 1 ? {
-                          background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-                          color: '#1e40af',
-                          border: '1px solid #93c5fd',
-                        } : {
-                          background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
-                          color: '#475569',
-                          border: '1px solid #cbd5e1',
-                        }}
-                      >
-                        v{contract.versionNumber}
-                        {contract.versionNumber > 1 && <span className="ml-1">🔁</span>}
+                      <div className="flex items-center gap-1">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          contract.versionNumber > 1 
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}>
+                          {contract.versionNumber > 1 && <FiRefreshCw className="h-3 w-3 mr-1" />}
+                          v{contract.versionNumber}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm font-semibold text-slate-800">
+                        {formatCurrency(contract.amount)}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-sm" style={{ color: '#64748b' }}>
-                      {formatDate(contract.effectiveDate)}
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-slate-600">
+                        {formatDate(contract.effectiveDate)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-slate-500">
+                        {formatDate(contract.createdAt)}
+                      </span>
                     </td>
                     <td className="px-4 py-4">
                       <StatusBadge status={contract.status} />

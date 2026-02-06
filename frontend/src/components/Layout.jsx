@@ -5,30 +5,17 @@ import ToastContainer from './ToastContainer';
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300">
+    <div className="min-h-screen bg-slate-50">
       <Sidebar />
       <ToastContainer />
       
       {/* Main Content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-60">
         {/* Top Bar */}
-        <div 
-          className="sticky top-0 z-10 px-4 lg:px-8 py-4 shadow-md"
-          style={{
-            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-            borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-          }}
-        >
+        <div className="sticky top-0 z-10 px-4 lg:px-6 py-3 bg-white border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="lg:hidden w-10"></div>
-            <h1 
-              className="text-xl font-semibold lg:text-2xl"
-              style={{ 
-                background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
+            <h1 className="text-lg font-semibold text-slate-800">
               Contract Management System
             </h1>
             <NotificationBell />
@@ -36,7 +23,7 @@ const Layout = () => {
         </div>
 
         {/* Page Content */}
-        <main className="px-4 lg:px-8 py-6">
+        <main className="px-4 lg:px-6 py-5">
           <Outlet />
         </main>
       </div>

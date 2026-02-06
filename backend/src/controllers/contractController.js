@@ -80,6 +80,11 @@ exports.getContracts = async (req, res, next) => {
           return null;
         }
 
+        // Finance should NOT see draft contracts (only submitted ones)
+        if ((req.user.role === 'finance' || req.user.role === 'senior_finance') && currentVersion?.status === 'draft') {
+          return null;
+        }
+
         return {
           ...contract.toObject(),
           currentVersion
@@ -129,7 +134,7 @@ exports.getContract = async (req, res, next) => {
       .populate('createdBy', 'name email')
       .populate('approvedByFinance', 'name email')
       .populate('approvedByClient', 'name email')
-      .populate('rejectedBy', 'name email')
+      .populate('rejectedBy', 'name email role')
       .sort({ versionNumber: -1 });
 
     res.status(200).json({
@@ -542,10 +547,11 @@ exports.rejectContract = async (req, res, next) => {
     
     // Store remarks based on who is rejecting (super_admin acts as effective role)
     if (req.user.role === 'finance' || (req.user.role === 'super_admin' && effectiveRole === 'finance')) {
-      // Finance/Super Admin (as Finance) provides both internal and client-facing remarks
+      // Finance/Super Admin (as Finance) provides internal remarks (required) and optional client-facing remarks
       const { remarksInternal, remarksClient } = req.body;
       currentVersion.financeRemarkInternal = remarksInternal || remarks;
-      currentVersion.financeRemarkClient = remarksClient || remarks;
+      // Only store client remark if Finance chose to send it (not null/undefined)
+      currentVersion.financeRemarkClient = remarksClient || null;
       currentVersion.rejectionRemarks = remarksInternal || remarks; // backward compatibility - store internal
     } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && effectiveRole === 'client')) {
       currentVersion.clientRemark = remarks;
@@ -560,10 +566,13 @@ exports.rejectContract = async (req, res, next) => {
       : remarks;
     await notifyLegalOfRejection(contract, currentVersion, notificationRemarks);
 
-    // Notify client if Finance/Super Admin (as Finance) rejected (so they know the contract is on hold)
+    // Notify client if Finance/Super Admin (as Finance) rejected AND chose to send client message
     if (req.user.role === 'finance' || (req.user.role === 'super_admin' && effectiveRole === 'finance')) {
-      const clientRemarks = req.body.remarksClient || remarks;
-      await notifyClientOfFinanceRejection(contract, currentVersion, clientRemarks);
+      const clientRemarks = req.body.remarksClient;
+      // Only notify client if Finance explicitly chose to send a message
+      if (clientRemarks) {
+        await notifyClientOfFinanceRejection(contract, currentVersion, clientRemarks);
+      }
     }
 
     // Notify legal if Client/Super Admin (as Client) rejected
@@ -768,7 +777,7 @@ exports.getContractVersions = async (req, res, next) => {
       .populate('createdBy', 'name email')
       .populate('approvedByFinance', 'name email')
       .populate('approvedByClient', 'name email')
-      .populate('rejectedBy', 'name email')
+      .populate('rejectedBy', 'name email role')
       .sort({ versionNumber: -1 });
 
     res.status(200).json({
@@ -801,6 +810,92 @@ exports.getContractAudit = async (req, res, next) => {
       success: true,
       count: auditLogs.length,
       data: auditLogs
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Send rejection remarks to client (Legal can send Finance internal remarks to client)
+// @route   POST /api/contracts/:id/send-to-client
+// @access  Private/Legal, Super Admin
+exports.sendRemarksToClient = async (req, res, next) => {
+  try {
+    const contract = await Contract.findById(req.params.id);
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contract not found'
+      });
+    }
+
+    // Get the current version
+    const currentVersion = await ContractVersion.findById(contract.currentVersion);
+    if (!currentVersion) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contract version not found'
+      });
+    }
+
+    // Only allow if contract was rejected and has internal remarks but no client remarks
+    if (currentVersion.status !== 'rejected') {
+      return res.status(400).json({
+        success: false,
+        message: 'Can only send remarks for rejected contracts'
+      });
+    }
+
+    if (!currentVersion.financeRemarkInternal) {
+      return res.status(400).json({
+        success: false,
+        message: 'No internal remarks to send'
+      });
+    }
+
+    if (currentVersion.financeRemarkClient) {
+      return res.status(400).json({
+        success: false,
+        message: 'Client remarks already sent'
+      });
+    }
+
+    const { remarksClient } = req.body;
+    if (!remarksClient || !remarksClient.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Client remarks are required'
+      });
+    }
+
+    // Update the version with client remarks
+    currentVersion.financeRemarkClient = remarksClient;
+    await currentVersion.save();
+
+    // Also update the contract's financeRemarkClient for quick access
+    contract.financeRemarkClient = remarksClient;
+    await contract.save();
+
+    // Notify client
+    await notifyClientOfFinanceRejection(contract, currentVersion, remarksClient);
+
+    // Create audit log
+    await createAuditLog({
+      contractId: contract._id,
+      contractVersionId: currentVersion._id,
+      action: 'sent_remarks_to_client',
+      userId: req.user._id,
+      role: req.user.role,
+      details: {
+        remarksClient: remarksClient
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Remarks sent to client successfully',
+      data: contract
     });
   } catch (error) {
     next(error);

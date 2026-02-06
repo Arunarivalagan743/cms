@@ -68,3 +68,9 @@ export const cancelContract = async (id, reason) => {
   const response = await api.post(`/contracts/${id}/cancel`, { reason });
   return response.data?.data || response.data;
 };
+
+// Send rejection remarks to client (Legal only)
+export const sendRemarksToClient = async (id, remarksClient) => {
+  const response = await api.post(`/contracts/${id}/send-to-client`, { remarksClient });
+  return response.data?.data || response.data;
+};

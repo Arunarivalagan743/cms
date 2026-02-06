@@ -14,6 +14,10 @@ import {
   FiAlertCircle,
   FiRefreshCw,
   FiTrash2,
+  FiFilter,
+  FiMessageSquare,
+  FiInfo,
+  FiSlash,
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -26,6 +30,7 @@ import {
   createAmendment,
   cancelContract,
   updateContract,
+  sendRemarksToClient,
 } from '../services/contractService';
 import { formatDate, formatCurrency, formatTimeAgo } from '../utils/helpers';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -46,6 +51,10 @@ const ContractDetails = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [toast, setToast] = useState(null);
   
+  // Filter states for versions and audit
+  const [versionFilter, setVersionFilter] = useState('all');
+  const [auditFilter, setAuditFilter] = useState('all');
+  
   // Toast helper
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
@@ -56,11 +65,14 @@ const ContractDetails = () => {
   const [showAmendModal, setShowAmendModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSendToClientModal, setShowSendToClientModal] = useState(false);
   
   // Form states
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [financeRemarkInternal, setFinanceRemarkInternal] = useState('');
   const [financeRemarkClient, setFinanceRemarkClient] = useState('');
+  const [sendClientRemark, setSendClientRemark] = useState(false); // Checkbox for Finance to send client remark
+  const [legalClientRemark, setLegalClientRemark] = useState(''); // Legal's message to client
   const [cancelReason, setCancelReason] = useState('');
   const [amendmentData, setAmendmentData] = useState({
     contractName: '',
@@ -156,11 +168,12 @@ const ContractDetails = () => {
     if (!contract) return null;
     
     const remarks = [];
+    const rejectorRole = contract.rejectedBy?.role;
     
-    // Finance remarks
+    // Finance remarks - only show to client if financeRemarkClient was explicitly set
     if (contract.financeRemarkInternal || contract.financeRemarkClient) {
       if (isClient) {
-        // Client only sees client-facing remark
+        // Client ONLY sees client-facing remark (if Finance chose to send it)
         if (contract.financeRemarkClient) {
           remarks.push({
             type: 'Finance Review',
@@ -169,6 +182,7 @@ const ContractDetails = () => {
             rejectedAt: contract.rejectedAt,
           });
         }
+        // If no financeRemarkClient, client sees NOTHING from Finance rejection
       } else {
         // Legal, Finance, Admin see internal remark
         if (contract.financeRemarkInternal) {
@@ -190,24 +204,31 @@ const ContractDetails = () => {
       }
     }
     
-    // Client remark - visible to all
+    // Client remark - visible to all (this is when CLIENT rejects, so everyone should see)
     if (contract.clientRemark) {
       remarks.push({
-        type: 'Client',
+        type: 'Client Remarks',
         remark: contract.clientRemark,
         rejectedBy: contract.rejectedBy,
         rejectedAt: contract.rejectedAt,
       });
     }
     
-    // Legacy remark field
+    // Legacy remark field - only show if no new-style remarks exist
+    // AND only show to client if the rejector was CLIENT (not Finance)
     if (remarks.length === 0 && contract.rejectionRemarks) {
-      remarks.push({
-        type: contract.rejectedBy?.role === 'finance' ? 'Finance' : 'Client',
-        remark: contract.rejectionRemarks,
-        rejectedBy: contract.rejectedBy,
-        rejectedAt: contract.rejectedAt,
-      });
+      // If client is viewing and rejector was Finance, don't show legacy remarks
+      if (isClient && (rejectorRole === 'finance' || rejectorRole === 'super_admin')) {
+        // Client should NOT see Finance internal remarks
+        // Return empty - no remarks visible to client
+      } else {
+        remarks.push({
+          type: rejectorRole === 'finance' ? 'Finance Review (Internal)' : 'Rejection Remarks',
+          remark: contract.rejectionRemarks,
+          rejectedBy: contract.rejectedBy,
+          rejectedAt: contract.rejectedAt,
+        });
+      }
     }
     
     return remarks;
@@ -351,14 +372,15 @@ const ContractDetails = () => {
   const needsFinanceStyleReject = contract?.status === 'pending_finance';
 
   const handleReject = async () => {
-    // Finance-style rejection needs both internal and client remarks (also for super_admin when status is pending_finance)
+    // Finance-style rejection needs internal remarks, client remarks are OPTIONAL
     if (needsFinanceStyleReject) {
       if (!financeRemarkInternal.trim()) {
         showToast('Internal remarks are required', 'error');
         return;
       }
-      if (!financeRemarkClient.trim()) {
-        showToast('Client-facing remarks are required', 'error');
+      // Client remarks only required if checkbox is checked
+      if (sendClientRemark && !financeRemarkClient.trim()) {
+        showToast('Client-facing remarks are required when "Send to Client" is checked', 'error');
         return;
       }
     } else {
@@ -371,7 +393,11 @@ const ContractDetails = () => {
     setActionLoading(true);
     try {
       if (needsFinanceStyleReject) {
-        await rejectContract(id, { remarksInternal: financeRemarkInternal, remarksClient: financeRemarkClient });
+        // Only send client remark if checkbox is checked
+        await rejectContract(id, { 
+          remarksInternal: financeRemarkInternal, 
+          remarksClient: sendClientRemark ? financeRemarkClient : null 
+        });
       } else {
         await rejectContract(id, { remarks: rejectRemarks });
       }
@@ -380,6 +406,7 @@ const ContractDetails = () => {
       setRejectRemarks('');
       setFinanceRemarkInternal('');
       setFinanceRemarkClient('');
+      setSendClientRemark(false);
       await fetchContractData();
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to reject contract', 'error');
@@ -434,6 +461,26 @@ const ContractDetails = () => {
       await fetchContractData();
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to update contract', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handler for Legal to send remarks to client
+  const handleSendToClient = async () => {
+    if (!legalClientRemark.trim()) {
+      showToast('Please enter a message for the client', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await sendRemarksToClient(id, legalClientRemark);
+      showToast('Message sent to client successfully', 'success');
+      setShowSendToClientModal(false);
+      setLegalClientRemark('');
+      await fetchContractData();
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to send message to client', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -584,22 +631,46 @@ const ContractDetails = () => {
 
       {/* Rejection Remarks Alert */}
       {contract.status === 'rejected' && visibleRemarks && visibleRemarks.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="card">
           <div className="flex items-start gap-3">
-            <FiAlertCircle className="h-6 w-6 text-red-600 mt-0.5" />
+            <FiAlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-semibold text-red-900">Contract Rejected</h4>
+              <h4 className="font-semibold text-slate-800">Contract Rejected</h4>
               {visibleRemarks.map((item, index) => (
                 <div key={index} className="mt-2">
-                  <p className="text-sm font-medium text-red-800">{item.type} Remarks:</p>
-                  <p className="text-sm text-red-700 mt-1">{item.remark}</p>
+                  <p className="text-sm font-medium text-slate-600">{item.type}:</p>
+                  <p className="text-sm text-red-600 mt-1">{item.remark}</p>
                   {item.rejectedBy && (
-                    <p className="text-xs text-red-600 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       By: {item.rejectedBy.name} • {item.rejectedAt && formatTimeAgo(item.rejectedAt)}
                     </p>
                   )}
                 </div>
               ))}
+              
+              {/* Legal can send remarks to client if Finance rejected but didn't send to client */}
+              {(isLegal || isSuperAdmin) && 
+               contract.financeRemarkInternal && 
+               !contract.financeRemarkClient && 
+               contract.rejectedBy?.role === 'finance' && (
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-600">
+                        <FiInfo className="inline h-4 w-4 mr-1" />
+                        Finance did not send a message to the client. You can send a message now.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowSendToClientModal(true)}
+                      className="btn-secondary text-sm flex items-center gap-2"
+                    >
+                      <FiSend className="h-4 w-4" />
+                      Send to Client
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -607,9 +678,9 @@ const ContractDetails = () => {
 
       {/* Cancelled Status Alert */}
       {contract.status === 'cancelled' && (
-        <div className="bg-gray-100 border border-gray-300 rounded-lg p-4">
+        <div className="card">
           <div className="flex items-start gap-3">
-            <FiTrash2 className="h-6 w-6 text-gray-600 mt-0.5" />
+            <FiTrash2 className="h-5 w-5 text-slate-500 mt-0.5" />
             <div>
               <h4 className="font-semibold text-gray-900">Contract Cancelled</h4>
               <p className="text-sm text-gray-700 mt-1">This contract has been cancelled and cannot be edited.</p>
@@ -622,14 +693,14 @@ const ContractDetails = () => {
       {contract.versionNumber > 1 && (
         <>
           {/* Amended Badge */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="card">
             <div className="flex items-center gap-3">
-              <FiRefreshCw className="h-6 w-6 text-blue-600" />
+              <FiRefreshCw className="h-5 w-5 text-blue-600" />
               <div>
-                <h4 className="font-semibold text-blue-900">
-                  🔁 Amended Version (v{contract.versionNumber})
+                <h4 className="font-semibold text-slate-800">
+                  Amended Version (v{contract.versionNumber})
                 </h4>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="text-sm text-slate-600 mt-1">
                   This is an amended version of the original contract. Previous versions are preserved for audit purposes.
                 </p>
               </div>
@@ -638,25 +709,23 @@ const ContractDetails = () => {
 
           {/* Changes in This Version - Diff View (Only for Legal/Finance/Admin, not for Client) */}
           {!isClient && getVersionChanges() && (
-            <div className="card border-l-4 border-l-green-500">
+            <div className="card">
               <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FiEdit className="h-5 w-5 text-green-600" />
                 Changes in This Version
               </h4>
               <div className="space-y-3">
                 {getVersionChanges().map((change, index) => (
-                  <div key={index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 min-w-[120px]">{change.field}:</span>
-                    <div className="flex-1 flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-red-600 line-through bg-red-50 px-2 py-1 rounded">
-                          {change.before}
-                        </span>
-                        <span className="text-gray-400">→</span>
-                        <span className="text-sm text-green-700 font-medium bg-green-50 px-2 py-1 rounded">
-                          {change.after}
-                        </span>
-                      </div>
+                  <div key={index} className="flex items-start gap-4 py-2 border-b border-slate-100 last:border-0">
+                    <span className="text-sm font-medium text-gray-600 min-w-[120px]">{change.field}:</span>
+                    <div className="flex-1 flex items-center gap-3">
+                      <span className="text-sm text-red-500 line-through">
+                        {change.before}
+                      </span>
+                      <span className="text-slate-400">→</span>
+                      <span className="text-sm text-green-600 font-medium">
+                        {change.after}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -666,24 +735,24 @@ const ContractDetails = () => {
 
           {/* Previous Rejection History */}
           {getPreviousRejectionHistory().length > 0 && (
-            <div className="card border-l-4 border-l-amber-500">
+            <div className="card">
               <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FiAlertCircle className="h-5 w-5 text-amber-600" />
                 Previous Rejection History
               </h4>
               <div className="space-y-4">
                 {getPreviousRejectionHistory().map((versionHistory, vIndex) => (
-                  <div key={vIndex} className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div key={vIndex} className="py-3 border-b border-slate-100 last:border-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-amber-900">Version {versionHistory.versionNumber}</span>
+                      <span className="font-medium text-slate-800">Version {versionHistory.versionNumber}</span>
                       <StatusBadge status={versionHistory.status} />
                     </div>
                     {versionHistory.remarks.map((remark, rIndex) => (
-                      <div key={rIndex} className="mt-2 pl-4 border-l-2 border-amber-300">
-                        <p className="text-xs font-medium text-amber-800">{remark.source} Rejection:</p>
-                        <p className="text-sm text-amber-900 mt-1">"{remark.remark}"</p>
+                      <div key={rIndex} className="mt-2 pl-4 border-l-2 border-slate-200">
+                        <p className="text-xs font-medium text-slate-500">{remark.source} Rejection:</p>
+                        <p className="text-sm text-slate-700 mt-1">"{remark.remark}"</p>
                         {remark.rejectedBy && (
-                          <p className="text-xs text-amber-700 mt-1">
+                          <p className="text-xs text-slate-500 mt-1">
                             By: {remark.rejectedBy.name} • {remark.rejectedAt && formatTimeAgo(remark.rejectedAt)}
                           </p>
                         )}
@@ -835,9 +904,34 @@ const ContractDetails = () => {
 
       {activeTab === 'versions' && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Version History</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Version History</h3>
+            <div className="flex items-center gap-2">
+              <FiFilter className="h-4 w-4 text-slate-400" />
+              <select
+                className="input-field text-sm py-1.5"
+                value={versionFilter}
+                onChange={(e) => setVersionFilter(e.target.value)}
+              >
+                <option value="all">All Versions</option>
+                <option value="current">Current Only</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+                <option value="amended">Amended</option>
+              </select>
+            </div>
+          </div>
           <div className="space-y-4">
-            {versions.map((version, index) => {
+            {versions
+              .filter(v => {
+                if (versionFilter === 'all') return true;
+                if (versionFilter === 'current') return v.isCurrent;
+                if (versionFilter === 'amended') return v.versionNumber > 1;
+                if (versionFilter === 'pending') return v.status.includes('pending');
+                return v.status === versionFilter;
+              })
+              .map((version, index) => {
               // Get previous version for comparison
               const prevVersion = versions.find(v => v.versionNumber === version.versionNumber - 1);
               const versionChanges = prevVersion ? [] : null;
@@ -867,13 +961,14 @@ const ContractDetails = () => {
                         Version {version.versionNumber}
                       </span>
                       {version.isCurrent && (
-                        <span className="px-2 py-1 text-xs bg-primary-100 text-primary-800 rounded-full">
+                        <span className="text-xs font-medium text-primary-600">
                           Current
                         </span>
                       )}
                       {version.versionNumber > 1 && (
-                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                          🔁 Amended
+                        <span className="flex items-center gap-1 text-xs font-medium text-blue-600">
+                          <FiRefreshCw className="h-3 w-3" />
+                          Amended
                         </span>
                       )}
                       <StatusBadge status={version.status} />
@@ -903,11 +998,14 @@ const ContractDetails = () => {
                   {/* Show changes compared to previous version - Only for Legal/Finance/Admin */}
                   {!isClient && versionChanges && versionChanges.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs font-medium text-green-700 mb-2">✓ Changes from v{version.versionNumber - 1}:</p>
+                      <p className="flex items-center gap-1 text-xs font-medium text-green-700 mb-2">
+                        <FiCheckCircle className="h-3 w-3" />
+                        Changes from v{version.versionNumber - 1}:
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {versionChanges.map((change, cIdx) => (
-                          <span key={cIdx} className="text-xs bg-green-50 text-green-800 px-2 py-1 rounded">
-                            {change.field}: <span className="line-through text-red-600">{change.before}</span> → <span className="font-medium">{change.after}</span>
+                          <span key={cIdx} className="text-xs text-slate-700">
+                            {change.field}: <span className="line-through text-red-500">{change.before}</span> → <span className="font-medium text-green-600">{change.after}</span>
                           </span>
                         ))}
                       </div>
@@ -916,11 +1014,12 @@ const ContractDetails = () => {
                   
                   {/* Show rejection remarks for this version */}
                   {version.status === 'rejected' && (version.rejectionRemarks || version.financeRemarkInternal || version.financeRemarkClient || version.clientRemark) && (
-                    <div className="mt-3 pt-3 border-t border-red-200 bg-red-50 -mx-4 -mb-4 px-4 pb-4 rounded-b-lg">
-                      <p className="text-xs font-medium text-red-800 mb-1">
-                        ❌ Rejected by {version.rejectedBy?.role === 'finance' ? 'Finance Team' : 'Client'}
+                    <div className="mt-3 pt-3 border-t border-red-200">
+                      <p className="flex items-center gap-1 text-xs font-medium text-red-600 mb-1">
+                        <FiXCircle className="h-3 w-3" />
+                        Rejected by {version.rejectedBy?.role === 'finance' ? 'Finance Team' : 'Client'}
                       </p>
-                      <p className="text-sm text-red-700">
+                      <p className="text-sm text-red-600">
                         {isClient 
                           ? (version.financeRemarkClient || version.clientRemark || 'Contract requires revision')
                           : (version.financeRemarkInternal || version.clientRemark || version.rejectionRemarks)
@@ -928,12 +1027,13 @@ const ContractDetails = () => {
                       </p>
                       {/* Show indicator to client that there may be more details with Legal */}
                       {isClient && version.rejectedBy?.role === 'finance' && version.financeRemarkInternal && (
-                        <p className="text-xs text-red-500 mt-2 italic">
-                          ℹ️ Additional details have been shared with the Legal team
+                        <p className="flex items-center gap-1 text-xs text-slate-500 mt-2 italic">
+                          <FiInfo className="h-3 w-3" />
+                          Additional details have been shared with the Legal team
                         </p>
                       )}
                       {version.rejectedBy && (
-                        <p className="text-xs text-red-600 mt-1">
+                        <p className="text-xs text-red-500 mt-1">
                           By: {version.rejectedBy.name} • {version.rejectedAt && formatTimeAgo(version.rejectedAt)}
                         </p>
                       )}
@@ -948,32 +1048,58 @@ const ContractDetails = () => {
 
       {activeTab === 'audit' && isSuperAdmin && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Audit Trail</h3>
-          <p className="text-sm text-gray-500 mb-4">Complete immutable history of all contract actions</p>
-          {auditLogs.length > 0 ? (
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Audit Trail</h3>
+              <p className="text-sm text-gray-500">Complete immutable history of all contract actions</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <FiFilter className="h-4 w-4 text-slate-400" />
+              <select
+                className="input-field text-sm py-1.5"
+                value={auditFilter}
+                onChange={(e) => setAuditFilter(e.target.value)}
+              >
+                <option value="all">All Actions</option>
+                <option value="created">Created</option>
+                <option value="updated">Updated</option>
+                <option value="submitted">Submitted</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="amended">Amended</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          {auditLogs.filter(log => auditFilter === 'all' || log.action === auditFilter).length > 0 ? (
             <div className="space-y-3">
-              {auditLogs.map((log, index) => {
-                // Action-specific styling
+              {auditLogs
+                .filter(log => auditFilter === 'all' || log.action === auditFilter)
+                .map((log, index) => {
+                // Action-specific styling with React icons
                 const actionStyles = {
-                  created: { bg: 'bg-blue-50', border: 'border-blue-200', icon: '📝', color: 'text-blue-700' },
-                  updated: { bg: 'bg-gray-50', border: 'border-gray-200', icon: '✏️', color: 'text-gray-700' },
-                  submitted: { bg: 'bg-indigo-50', border: 'border-indigo-200', icon: '📤', color: 'text-indigo-700' },
-                  approved: { bg: 'bg-green-50', border: 'border-green-200', icon: '✅', color: 'text-green-700' },
-                  rejected: { bg: 'bg-red-50', border: 'border-red-200', icon: '❌', color: 'text-red-700' },
-                  amended: { bg: 'bg-amber-50', border: 'border-amber-200', icon: '🔁', color: 'text-amber-700' },
-                  cancelled: { bg: 'bg-gray-100', border: 'border-gray-300', icon: '🚫', color: 'text-gray-700' },
+                  created: { icon: FiFileText, color: 'text-blue-600' },
+                  updated: { icon: FiEdit, color: 'text-slate-600' },
+                  submitted: { icon: FiSend, color: 'text-indigo-600' },
+                  approved: { icon: FiCheckCircle, color: 'text-green-600' },
+                  rejected: { icon: FiXCircle, color: 'text-red-600' },
+                  amended: { icon: FiRefreshCw, color: 'text-amber-600' },
+                  cancelled: { icon: FiSlash, color: 'text-slate-500' },
                 };
                 const style = actionStyles[log.action] || actionStyles.updated;
+                const ActionIcon = style.icon;
                 
                 return (
-                  <div key={log._id} className={`flex items-start gap-4 p-4 ${style.bg} border ${style.border} rounded-lg`}>
-                    <div className="text-2xl">{style.icon}</div>
+                  <div key={log._id} className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg">
+                    <div className="mt-0.5">
+                      <ActionIcon className={`h-5 w-5 ${style.color}`} />
+                    </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-2">
                           <p className={`font-semibold capitalize ${style.color}`}>{log.action}</p>
                           {log.contractVersion?.versionNumber && (
-                            <span className="text-xs bg-white px-2 py-0.5 rounded border">
+                            <span className="text-xs text-slate-500">
                               v{log.contractVersion.versionNumber}
                             </span>
                           )}
@@ -982,11 +1108,12 @@ const ContractDetails = () => {
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
                         By: <span className="font-medium">{log.performedBy?.name || 'System'}</span>
-                        <span className="ml-2 px-2 py-0.5 text-xs bg-white rounded border capitalize">{log.roleAtTime}</span>
+                        <span className="ml-2 text-xs text-slate-500 capitalize">({log.roleAtTime})</span>
                       </p>
                       {log.remarks && (
-                        <p className="text-sm text-gray-700 mt-2 p-2 bg-white rounded border-l-2 border-gray-400">
-                          💬 "{log.remarks}"
+                        <p className="flex items-start gap-2 text-sm text-gray-700 mt-2">
+                          <FiMessageSquare className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                          <span>"{log.remarks}"</span>
                         </p>
                       )}
                     </div>
@@ -995,7 +1122,7 @@ const ContractDetails = () => {
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">No audit logs available</p>
+            <p className="text-gray-500 text-center py-8">No audit logs found for the selected filter</p>
           )}
         </div>
       )}
@@ -1007,22 +1134,18 @@ const ContractDetails = () => {
         title="Reject Contract"
       >
         <div className="space-y-4">
-          {/* Finance-style rejection (pending_finance): TWO fields - Internal + Client-facing */}
+          {/* Finance-style rejection (pending_finance): Internal required, Client optional */}
           {needsFinanceStyleReject ? (
             <>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800">
-                  <strong>Note:</strong> For Finance rejection, you need to provide two types of remarks:
+              <div className="p-3 border border-slate-200 rounded-lg">
+                <p className="text-sm text-slate-700">
+                  <strong>Note:</strong> Provide rejection details for the Legal team. You can optionally notify the Client.
                 </p>
-                <ul className="text-sm text-amber-700 mt-1 list-disc list-inside">
-                  <li><strong>Internal Remarks:</strong> Detailed reason (visible to Legal & Admin only)</li>
-                  <li><strong>Client Remarks:</strong> Clean, professional message (visible to Client)</li>
-                </ul>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🔒 Internal Remarks (Legal & Admin Only) <span className="text-red-500">*</span>
+                  Internal Remarks (Legal & Admin Only) <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={financeRemarkInternal}
@@ -1034,18 +1157,38 @@ const ContractDetails = () => {
                 <p className="text-xs text-gray-500 mt-1">This will NOT be shown to the Client</p>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  👤 Client-Facing Remarks (Visible to Client) <span className="text-red-500">*</span>
+              {/* Optional: Send message to Client */}
+              <div className="border border-slate-200 rounded-lg p-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sendClientRemark}
+                    onChange={(e) => setSendClientRemark(e.target.checked)}
+                    className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-sm font-medium text-slate-700">
+                    Send reason to Client
+                  </span>
                 </label>
-                <textarea
-                  value={financeRemarkClient}
-                  onChange={(e) => setFinanceRemarkClient(e.target.value)}
-                  rows={3}
-                  className="input-field"
-                  placeholder="e.g., Financial terms require revision, please review pricing..."
-                />
-                <p className="text-xs text-gray-500 mt-1">Keep this professional - Client will see this</p>
+                <p className="text-xs text-slate-500 mt-1 ml-7">
+                  Check this if you want to inform the client why the contract is being returned
+                </p>
+                
+                {sendClientRemark && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Message for Client <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={financeRemarkClient}
+                      onChange={(e) => setFinanceRemarkClient(e.target.value)}
+                      rows={3}
+                      className="input-field"
+                      placeholder="e.g., Financial terms require revision, please review pricing..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Keep this professional - Client will see this</p>
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -1077,7 +1220,7 @@ const ContractDetails = () => {
             </button>
             <button
               onClick={handleReject}
-              disabled={actionLoading || (needsFinanceStyleReject ? (!financeRemarkInternal.trim() || !financeRemarkClient.trim()) : !rejectRemarks.trim())}
+              disabled={actionLoading || (needsFinanceStyleReject ? (!financeRemarkInternal.trim() || (sendClientRemark && !financeRemarkClient.trim())) : !rejectRemarks.trim())}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {actionLoading ? 'Rejecting...' : 'Reject Contract'}
@@ -1219,6 +1362,59 @@ const ContractDetails = () => {
               className="btn-primary"
             >
               {actionLoading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Send to Client Modal (Legal sends Finance rejection to Client) */}
+      <Modal
+        isOpen={showSendToClientModal}
+        onClose={() => setShowSendToClientModal(false)}
+        title="Send Message to Client"
+      >
+        <div className="space-y-4">
+          <div className="p-3 border border-slate-200 rounded-lg bg-slate-50">
+            <p className="text-sm text-slate-700">
+              <strong>Finance Internal Remarks:</strong>
+            </p>
+            <p className="text-sm text-slate-600 mt-1 italic">
+              "{contract?.financeRemarkInternal}"
+            </p>
+          </div>
+          
+          <p className="text-sm text-slate-600">
+            Compose a professional message for the client explaining why the contract was returned. You can rephrase the Finance remarks in a client-friendly way.
+          </p>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Message to Client <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={legalClientRemark}
+              onChange={(e) => setLegalClientRemark(e.target.value)}
+              rows={4}
+              className="input-field"
+              placeholder="e.g., The contract requires revision due to pricing terms. Please review and resubmit..."
+            />
+            <p className="text-xs text-gray-500 mt-1">This message will be visible to the client</p>
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => setShowSendToClientModal(false)}
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSendToClient}
+              disabled={actionLoading || !legalClientRemark.trim()}
+              className="btn-primary flex items-center gap-2 disabled:opacity-50"
+            >
+              <FiSend className="h-4 w-4" />
+              {actionLoading ? 'Sending...' : 'Send to Client'}
             </button>
           </div>
         </div>

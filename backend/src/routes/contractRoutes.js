@@ -12,7 +12,8 @@ const {
   createAmendment,
   cancelContract,
   getContractVersions,
-  getContractAudit
+  getContractAudit,
+  sendRemarksToClient
 } = require('../controllers/contractController');
 const { protect, authorize, checkPermission } = require('../middleware/auth');
 const validate = require('../middleware/validate');
@@ -109,5 +110,16 @@ router.post(
 
 // Cancel contract (requires canCancelContract permission)
 router.post('/:id/cancel', checkPermission('canCancelContract'), cancelContract);
+
+// Send rejection remarks to client (Legal only - when Finance didn't send to client)
+router.post(
+  '/:id/send-to-client',
+  checkPermission('canSendRemarksToClient'),
+  [
+    body('remarksClient').notEmpty().withMessage('Client remarks are required')
+  ],
+  validate,
+  sendRemarksToClient
+);
 
 module.exports = router;

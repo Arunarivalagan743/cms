@@ -20,6 +20,7 @@ const NotificationBell = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [hasShownInitial, setHasShownInitial] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -27,6 +28,17 @@ const NotificationBell = () => {
     const interval = setInterval(fetchNotifications, 30000); // Refresh every 30s
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-show dropdown when user logs in and has unread notifications
+  useEffect(() => {
+    if (!initialLoad && !hasShownInitial && unreadCount > 0) {
+      setShowDropdown(true);
+      setHasShownInitial(true);
+      // Auto-close after 5 seconds
+      const timer = setTimeout(() => setShowDropdown(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [initialLoad, unreadCount, hasShownInitial]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -98,21 +110,11 @@ const NotificationBell = () => {
       {/* Bell Icon */}
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 text-slate-600 hover:text-slate-900 rounded-xl transition-all duration-300"
-        style={{
-          background: showDropdown ? 'linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%)' : 'transparent',
-        }}
-        onMouseEnter={(e) => !showDropdown && (e.currentTarget.style.background = 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)')}
-        onMouseLeave={(e) => !showDropdown && (e.currentTarget.style.background = 'transparent')}
+        className={`relative p-2 rounded transition-colors ${showDropdown ? 'bg-slate-100 text-slate-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
       >
-        <FiBell className="h-6 w-6" />
+        <FiBell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span 
-            className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold leading-none text-white rounded-full shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-            }}
-          >
+          <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-medium text-white bg-red-500 rounded-full">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -120,28 +122,15 @@ const NotificationBell = () => {
 
       {/* Dropdown */}
       {showDropdown && (
-        <div 
-          className="absolute right-0 mt-2 w-96 rounded-xl shadow-2xl overflow-hidden animate-fade-in"
-          style={{
-            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-            border: '1px solid rgba(226, 232, 240, 0.8)',
-          }}
-        >
+        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden animate-fade-in">
           {/* Header */}
-          <div 
-            className="px-4 py-3 flex items-center justify-between"
-            style={{
-              background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)',
-              borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-            }}
-          >
-            <h3 className="text-lg font-semibold" style={{ color: '#1e3a5f' }}>Notifications</h3>
+          <div className="px-4 py-3 flex items-center justify-between bg-slate-50 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
                 disabled={loading}
-                className="text-sm font-medium transition-colors"
-                style={{ color: '#2d8bc9' }}
+                className="text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
               >
                 {loading ? 'Marking...' : 'Mark all read'}
               </button>
@@ -149,65 +138,45 @@ const NotificationBell = () => {
           </div>
 
           {/* Notification List */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto">
             {initialLoad ? (
-              <div className="px-4 py-8 text-center">
-                <div 
-                  className="animate-spin rounded-full h-8 w-8 mx-auto mb-2"
-                  style={{
-                    border: '3px solid rgba(45, 139, 201, 0.2)',
-                    borderTop: '3px solid #2d8bc9',
-                  }}
-                ></div>
-                <p className="text-slate-500 text-sm">Loading notifications...</p>
+              <div className="px-4 py-6 text-center">
+                <div className="animate-spin rounded-full h-6 w-6 mx-auto mb-2 border-2 border-primary-200 border-t-primary-600"></div>
+                <p className="text-slate-500 text-xs">Loading...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <div 
-                  className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-3"
-                  style={{
-                    background: 'linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%)',
-                  }}
-                >
-                  <FiBell className="h-7 w-7 text-slate-400" />
+              <div className="px-4 py-6 text-center">
+                <div className="mx-auto w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-2">
+                  <FiBell className="h-5 w-5 text-slate-400" />
                 </div>
-                <p className="text-slate-500">No notifications</p>
+                <p className="text-slate-500 text-sm">No notifications</p>
               </div>
             ) : (
               <>
                 {notifications.slice(0, 5).map((notification) => (
                   <div
                     key={notification._id}
-                    className="px-4 py-3 transition-all duration-200 cursor-pointer"
-                    style={{
-                      borderBottom: '1px solid rgba(226, 232, 240, 0.6)',
-                      background: notification.read ? 'transparent' : 'linear-gradient(90deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.12) 50%, rgba(96, 165, 250, 0.08) 100%)',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(90deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.15) 50%, rgba(96, 165, 250, 0.1) 100%)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = notification.read ? 'transparent' : 'linear-gradient(90deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.12) 50%, rgba(96, 165, 250, 0.08) 100%)'}
-                    onClick={() => !notification.read && handleMarkAsRead(notification._id)}
+                    className={`px-4 py-3 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${!notification.isRead ? 'bg-blue-50/50' : ''}`}
+                    onClick={() => !notification.isRead && handleMarkAsRead(notification._id)}
                   >
                     <div className="flex gap-3">
-                      <div className="flex-shrink-0 mt-1">
+                      <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium" style={{ color: '#334155' }}>
+                        <p className="text-sm font-medium text-slate-700">
                           {notification.title}
                         </p>
-                        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
+                        <p className="text-xs text-slate-400 mt-1">
                           {formatTimeAgo(notification.createdAt)}
                         </p>
                       </div>
-                      {!notification.read && (
+                      {!notification.isRead && (
                         <div className="flex-shrink-0">
-                          <span 
-                            className="inline-block w-2.5 h-2.5 rounded-full shadow-sm"
-                            style={{ background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)' }}
-                          ></span>
+                          <span className="inline-block w-2 h-2 bg-primary-500 rounded-full"></span>
                         </div>
                       )}
                     </div>
@@ -219,18 +188,11 @@ const NotificationBell = () => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div 
-              className="px-4 py-3"
-              style={{
-                background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
-                borderTop: '1px solid rgba(226, 232, 240, 0.8)',
-              }}
-            >
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200">
               <Link
                 to="/notifications"
                 onClick={() => setShowDropdown(false)}
-                className="block text-center text-sm font-medium transition-colors"
-                style={{ color: '#2d8bc9' }}
+                className="block text-center text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
               >
                 View all notifications
               </Link>

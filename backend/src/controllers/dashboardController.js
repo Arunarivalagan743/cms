@@ -130,7 +130,35 @@ exports.getPendingApprovals = async (req, res, next) => {
     let pendingContracts = [];
     const userRole = req.user.role;
 
-    if (userRole === 'finance') {
+    if (userRole === 'super_admin') {
+      // Super Admin sees all pending contracts
+      const versions = await ContractVersion.find({ 
+        status: { $in: ['pending_finance', 'pending_client'] }, 
+        isCurrent: true 
+      })
+        .populate({
+          path: 'contract',
+          populate: [
+            { path: 'client', select: 'name email' },
+            { path: 'createdBy', select: 'name email' }
+          ]
+        })
+        .sort({ updatedAt: -1 });
+
+      pendingContracts = versions.map(v => ({
+        contractId: v.contract._id,
+        contractNumber: v.contract.contractNumber,
+        contractName: v.contractName,
+        amount: v.amount,
+        effectiveDate: v.effectiveDate,
+        status: v.status,
+        client: v.contract.client,
+        createdBy: v.contract.createdBy,
+        submittedAt: v.updatedAt,
+        versionNumber: v.versionNumber
+      }));
+
+    } else if (userRole === 'finance') {
       // Get contracts pending finance review
       const versions = await ContractVersion.find({ 
         status: 'pending_finance', 
@@ -235,6 +263,7 @@ exports.getActiveContracts = async (req, res, next) => {
       const myContracts = await Contract.find({ createdBy: req.user._id });
       query.contract = { $in: myContracts.map(c => c._id) };
     }
+    // super_admin and finance see all active contracts (no contract filter needed)
 
     query.status = 'active';
     query.isCurrent = true;
@@ -285,6 +314,7 @@ exports.getRejectedContracts = async (req, res, next) => {
       const myContracts = await Contract.find({ createdBy: req.user._id });
       query.contract = { $in: myContracts.map(c => c._id) };
     }
+    // super_admin and finance see all rejected contracts (no contract filter needed)
 
     query.status = 'rejected';
     query.isCurrent = true;

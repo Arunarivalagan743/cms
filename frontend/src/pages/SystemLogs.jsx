@@ -23,22 +23,22 @@ import RoleBadge from '../components/RoleBadge';
 import EmptyState from '../components/EmptyState';
 
 const actionConfig = {
-  login: { icon: FiLogIn, color: 'text-green-600', bg: 'bg-green-100', label: 'Login' },
-  login_failed: { icon: FiAlertTriangle, color: 'text-red-600', bg: 'bg-red-100', label: 'Login Failed' },
-  logout: { icon: FiLogOut, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Logout' },
-  user_created: { icon: FiUserPlus, color: 'text-blue-600', bg: 'bg-blue-100', label: 'User Created' },
-  user_updated: { icon: FiEdit, color: 'text-yellow-600', bg: 'bg-yellow-100', label: 'User Updated' },
-  user_deleted: { icon: FiUserMinus, color: 'text-red-600', bg: 'bg-red-100', label: 'User Deleted' },
-  user_disabled: { icon: FiUserMinus, color: 'text-orange-600', bg: 'bg-orange-100', label: 'User Disabled' },
-  user_enabled: { icon: FiUserCheck, color: 'text-green-600', bg: 'bg-green-100', label: 'User Enabled' },
-  role_changed: { icon: FiShield, color: 'text-purple-600', bg: 'bg-purple-100', label: 'Role Changed' },
-  password_reset: { icon: FiMail, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Password Reset' },
-  password_changed: { icon: FiShield, color: 'text-green-600', bg: 'bg-green-100', label: 'Password Changed' },
-  invite_sent: { icon: FiMail, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Invite Sent' },
-  invite_resent: { icon: FiMail, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Invite Resent' },
-  workflow_updated: { icon: FiSettings, color: 'text-indigo-600', bg: 'bg-indigo-100', label: 'Workflow Updated' },
-  permission_updated: { icon: FiShield, color: 'text-purple-600', bg: 'bg-purple-100', label: 'Permission Updated' },
-  system_config_changed: { icon: FiSettings, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Config Changed' },
+  login: { icon: FiLogIn, color: 'text-green-600', label: 'Login' },
+  login_failed: { icon: FiAlertTriangle, color: 'text-red-600', label: 'Login Failed' },
+  logout: { icon: FiLogOut, color: 'text-slate-500', label: 'Logout' },
+  user_created: { icon: FiUserPlus, color: 'text-blue-600', label: 'User Created' },
+  user_updated: { icon: FiEdit, color: 'text-amber-600', label: 'User Updated' },
+  user_deleted: { icon: FiUserMinus, color: 'text-red-600', label: 'User Deleted' },
+  user_disabled: { icon: FiUserMinus, color: 'text-orange-600', label: 'User Disabled' },
+  user_enabled: { icon: FiUserCheck, color: 'text-green-600', label: 'User Enabled' },
+  role_changed: { icon: FiShield, color: 'text-purple-600', label: 'Role Changed' },
+  password_reset: { icon: FiMail, color: 'text-blue-600', label: 'Password Reset' },
+  password_changed: { icon: FiShield, color: 'text-green-600', label: 'Password Changed' },
+  invite_sent: { icon: FiMail, color: 'text-blue-600', label: 'Invite Sent' },
+  invite_resent: { icon: FiMail, color: 'text-blue-600', label: 'Invite Resent' },
+  workflow_updated: { icon: FiSettings, color: 'text-indigo-600', label: 'Workflow Updated' },
+  permission_updated: { icon: FiShield, color: 'text-purple-600', label: 'Permission Updated' },
+  system_config_changed: { icon: FiSettings, color: 'text-slate-600', label: 'Config Changed' },
 };
 
 const SystemLogs = () => {
@@ -50,6 +50,8 @@ const SystemLogs = () => {
     action: '',
     startDate: '',
     endDate: '',
+    search: '',
+    success: '',
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -92,15 +94,14 @@ const SystemLogs = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ action: '', startDate: '', endDate: '' });
+    setFilters({ action: '', startDate: '', endDate: '', search: '', success: '' });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const getActionDisplay = (action) => {
     const config = actionConfig[action] || { 
       icon: FiActivity, 
-      color: 'text-gray-600', 
-      bg: 'bg-gray-100',
+      color: 'text-slate-600',
       label: action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     };
     return config;
@@ -182,25 +183,25 @@ const SystemLogs = () => {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="card bg-blue-50 border-blue-200">
-            <div className="text-2xl font-bold text-blue-700">{stats.todayLogs}</div>
-            <div className="text-sm text-blue-600">Today's Events</div>
+          <div className="card">
+            <div className="text-2xl font-bold text-blue-600">{stats.todayLogs}</div>
+            <div className="text-sm text-slate-500">Today's Events</div>
           </div>
-          <div className="card bg-green-50 border-green-200">
-            <div className="text-2xl font-bold text-green-700">{stats.loginCount}</div>
-            <div className="text-sm text-green-600">Logins Today</div>
+          <div className="card">
+            <div className="text-2xl font-bold text-green-600">{stats.loginCount}</div>
+            <div className="text-sm text-slate-500">Logins Today</div>
           </div>
-          <div className="card bg-red-50 border-red-200">
-            <div className="text-2xl font-bold text-red-700">{stats.failedLogins}</div>
-            <div className="text-sm text-red-600">Failed Logins</div>
+          <div className="card">
+            <div className="text-2xl font-bold text-red-600">{stats.failedLogins}</div>
+            <div className="text-sm text-slate-500">Failed Logins</div>
           </div>
-          <div className="card bg-purple-50 border-purple-200">
-            <div className="text-2xl font-bold text-purple-700">{stats.userChanges}</div>
-            <div className="text-sm text-purple-600">User Changes</div>
+          <div className="card">
+            <div className="text-2xl font-bold text-purple-600">{stats.userChanges}</div>
+            <div className="text-sm text-slate-500">User Changes</div>
           </div>
-          <div className="card bg-gray-50 border-gray-200">
-            <div className="text-2xl font-bold text-gray-700">{stats.totalLogs}</div>
-            <div className="text-sm text-gray-600">Total Events</div>
+          <div className="card">
+            <div className="text-2xl font-bold text-slate-700">{stats.totalLogs}</div>
+            <div className="text-sm text-slate-500">Total Events</div>
           </div>
         </div>
       )}
@@ -208,8 +209,19 @@ const SystemLogs = () => {
       {/* Filters */}
       {showFilters && (
         <div className="card">
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search User</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Search by name or email..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
               <select
                 className="input-field"
@@ -226,19 +238,36 @@ const SystemLogs = () => {
                   <option value="user_created">User Created</option>
                   <option value="user_updated">User Updated</option>
                   <option value="user_deleted">User Deleted</option>
+                  <option value="user_disabled">User Disabled</option>
+                  <option value="user_enabled">User Enabled</option>
                   <option value="role_changed">Role Changed</option>
                 </optgroup>
-                <optgroup label="Password">
+                <optgroup label="Invites & Password">
+                  <option value="invite_sent">Invite Sent</option>
+                  <option value="invite_resent">Invite Resent</option>
                   <option value="password_reset">Password Reset</option>
                   <option value="password_changed">Password Changed</option>
                 </optgroup>
                 <optgroup label="System">
                   <option value="workflow_updated">Workflow Updated</option>
                   <option value="permission_updated">Permission Updated</option>
+                  <option value="system_config_changed">Config Changed</option>
                 </optgroup>
               </select>
             </div>
-            <div className="flex-1">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                className="input-field"
+                value={filters.success}
+                onChange={(e) => handleFilterChange('success', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="true">Success</option>
+                <option value="false">Failed</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
               <input
                 type="date"
@@ -247,7 +276,7 @@ const SystemLogs = () => {
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
               <input
                 type="date"
@@ -256,11 +285,13 @@ const SystemLogs = () => {
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
               />
             </div>
+          </div>
+          <div className="mt-4 flex justify-end">
             <button
               onClick={clearFilters}
               className="btn-secondary whitespace-nowrap"
             >
-              Clear Filters
+              Clear All Filters
             </button>
           </div>
         </div>
@@ -292,19 +323,19 @@ const SystemLogs = () => {
                         />
                       )}
                       <div className="relative flex items-start space-x-3">
-                        <div className={`relative px-1`}>
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${actionDisplay.bg}`}>
+                        <div className="relative px-1">
+                          <div className="h-10 w-10 rounded-full flex items-center justify-center border border-slate-200">
                             <ActionIcon className={`h-5 w-5 ${actionDisplay.color}`} />
                           </div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${actionDisplay.bg} ${actionDisplay.color}`}>
+                            <span className={`text-sm font-medium ${actionDisplay.color}`}>
                               {actionDisplay.label}
                             </span>
                             {!log.success && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                                Failed
+                              <span className="text-xs font-medium text-red-600">
+                                (Failed)
                               </span>
                             )}
                           </div>

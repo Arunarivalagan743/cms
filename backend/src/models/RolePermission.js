@@ -18,6 +18,7 @@ const rolePermissionSchema = new mongoose.Schema({
     canRejectContract: { type: Boolean, default: false },
     canAmendContract: { type: Boolean, default: false },
     canCancelContract: { type: Boolean, default: false },
+    canSendRemarksToClient: { type: Boolean, default: false },
     canViewAllContracts: { type: Boolean, default: false },
     canViewOwnContracts: { type: Boolean, default: true },
     

@@ -85,191 +85,147 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 
-            className="text-2xl font-bold"
-            style={{ 
-              background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            {getGreeting()}, {user?.name}!
-          </h2>
-          <p className="mt-1" style={{ color: '#64748b' }}>Here's what's happening with your contracts today</p>
+          <h1 className="text-2xl font-semibold text-slate-800">
+            {getGreeting()}, {user?.name}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">Here's what's happening with your contracts today</p>
         </div>
         {isLegal && (
           <Link to="/contracts/new" className="btn-primary flex items-center gap-2">
-            <FiPlus className="h-5 w-5" />
+            <FiPlus className="h-4 w-4" />
             New Contract
           </Link>
         )}
         {isSuperAdmin && (
           <Link to="/users" className="btn-primary flex items-center gap-2">
-            <FiUsers className="h-5 w-5" />
+            <FiUsers className="h-4 w-4" />
             Manage Users
           </Link>
         )}
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Contracts - For all roles except Finance */}
         {!isFinance && (
-          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: '#64748b' }}>Total Contracts</p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#1e3a5f' }}>
+                <p className="text-sm font-medium text-slate-500">Total Contracts</p>
+                <p className="text-2xl font-semibold text-slate-800 mt-1">
                   {stats?.totalContracts || 0}
                 </p>
               </div>
-              <div 
-                className="p-3 rounded-xl shadow-md"
-                style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
-              >
-                <FiFileText className="h-6 w-6 text-blue-600" />
-              </div>
+              <FiFileText className="h-5 w-5 text-blue-600" />
             </div>
           </div>
         )}
 
         {/* Finance - Pending Review */}
         {isFinance && (
-          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: '#64748b' }}>Pending My Review</p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#d97706' }}>
+                <p className="text-sm font-medium text-slate-500">Pending My Review</p>
+                <p className="text-2xl font-semibold text-amber-600 mt-1">
                   {stats?.pendingReview || 0}
                 </p>
               </div>
-              <div 
-                className="p-3 rounded-xl shadow-md"
-                style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}
-              >
-                <FiClock className="h-6 w-6 text-yellow-600" />
-              </div>
+              <FiClock className="h-5 w-5 text-amber-600" />
             </div>
           </div>
         )}
 
         {/* Active Contracts - Available for all roles */}
-        <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium" style={{ color: '#64748b' }}>Active Contracts</p>
-              <p className="text-3xl font-bold mt-2" style={{ color: '#059669' }}>
+              <p className="text-sm font-medium text-slate-500">Active Contracts</p>
+              <p className="text-2xl font-semibold text-emerald-600 mt-1">
                 {stats?.activeContracts || stats?.totalActive || 0}
               </p>
             </div>
-            <div 
-              className="p-3 rounded-xl shadow-md"
-              style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' }}
-            >
-              <FiCheckCircle className="h-6 w-6 text-green-600" />
-            </div>
+            <FiCheckCircle className="h-5 w-5 text-emerald-600" />
           </div>
         </div>
 
         {/* Pending Reviews - For non-Finance roles */}
         {!isFinance && (
-          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: '#64748b' }}>
+                <p className="text-sm font-medium text-slate-500">
                   {isClient ? 'Pending My Approval' : 'Pending Reviews'}
                 </p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#d97706' }}>
+                <p className="text-2xl font-semibold text-amber-600 mt-1">
                   {stats?.pendingContracts || stats?.pendingApproval || 0}
                 </p>
               </div>
-              <div 
-                className="p-3 rounded-xl shadow-md"
-                style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}
-              >
-                <FiClock className="h-6 w-6 text-yellow-600" />
-              </div>
+              <FiClock className="h-5 w-5 text-amber-600" />
             </div>
           </div>
         )}
 
         {/* Finance - Approved By Me */}
         {isFinance && (
-          <div className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: '#64748b' }}>Approved By Me</p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#2563eb' }}>
+                <p className="text-sm font-medium text-slate-500">Approved By Me</p>
+                <p className="text-2xl font-semibold text-blue-600 mt-1">
                   {stats?.approvedByMe || 0}
                 </p>
               </div>
-              <div 
-                className="p-3 rounded-xl shadow-md"
-                style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}
-              >
-                <FiCheckCircle className="h-6 w-6 text-blue-600" />
-              </div>
+              <FiCheckCircle className="h-5 w-5 text-blue-600" />
             </div>
           </div>
         )}
 
         {/* Previous Role Activity - For users who changed roles */}
         {isFinance && stats?.previousRoleStats && (
-          <div 
-            className="card hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            style={{ borderLeft: '4px solid #6366f1' }}
-          >
+          <div className="stat-card border-l-4 border-l-indigo-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: '#64748b' }}>
+                <p className="text-sm font-medium text-slate-500">
                   My Previous Work (as {stats.previousRoleStats.previousRole})
                 </p>
-                <p className="text-3xl font-bold mt-2" style={{ color: '#6366f1' }}>
+                <p className="text-2xl font-semibold text-indigo-600 mt-1">
                   {stats.previousRoleStats.contractsCreated || 0}
                 </p>
-                <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
+                <p className="text-xs text-slate-400 mt-0.5">
                   {stats.previousRoleStats.activeFromCreated || 0} now active
                 </p>
               </div>
-              <div 
-                className="p-3 rounded-xl shadow-md"
-                style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)' }}
-              >
-                <FiFileText className="h-6 w-6 text-indigo-600" />
-              </div>
+              <FiFileText className="h-5 w-5 text-indigo-600" />
             </div>
           </div>
         )}
 
         {/* Super Admin - Total Users */}
         {isSuperAdmin && (
-          <div className="card hover:shadow-md transition-shadow">
+          <div className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">
+                <p className="text-sm font-medium text-slate-500">Total Users</p>
+                <p className="text-2xl font-semibold text-violet-600 mt-1">
                   {stats?.totalUsers || 0}
                 </p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <FiUsers className="h-6 w-6 text-purple-600" />
-              </div>
+              <FiUsers className="h-5 w-5 text-violet-600" />
             </div>
           </div>
         )}
 
         {/* Rejected Contracts Stats Card */}
-        <div className="card hover:shadow-md transition-shadow">
+        <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Rejected Contracts</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">
+              <p className="text-sm font-medium text-slate-500">Rejected Contracts</p>
+              <p className="text-2xl font-semibold text-red-600 mt-1">
                 {stats?.rejectedContracts || 0}
               </p>
             </div>
-            <div className="p-3 bg-red-100 rounded-lg">
-              <FiXCircle className="h-6 w-6 text-red-600" />
-            </div>
+            <FiXCircle className="h-5 w-5 text-red-600" />
           </div>
         </div>
       </div>
@@ -278,9 +234,9 @@ const Dashboard = () => {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <FiClock className="h-5 w-5 text-yellow-600" />
+            <FiClock className="h-5 w-5 text-amber-600" />
             <h3 className="text-lg font-semibold text-gray-900">Pending Approvals</h3>
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full">
+            <span className="text-sm font-medium text-amber-600">
               {pendingApprovals.length}
             </span>
           </div>
@@ -337,9 +293,9 @@ const Dashboard = () => {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <FiCheckCircle className="h-5 w-5 text-green-600" />
+            <FiCheckCircle className="h-5 w-5 text-emerald-600" />
             <h3 className="text-lg font-semibold text-gray-900">Active Contracts</h3>
-            <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
+            <span className="text-sm font-medium text-emerald-600">
               {activeContracts.length}
             </span>
           </div>
@@ -392,7 +348,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2">
             <FiXCircle className="h-5 w-5 text-red-600" />
             <h3 className="text-lg font-semibold text-gray-900">Rejected Contracts</h3>
-            <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
+            <span className="text-sm font-medium text-red-600">
               {rejectedContracts.length}
             </span>
           </div>

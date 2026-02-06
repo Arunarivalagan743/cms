@@ -8,51 +8,31 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-slate-900/50 transition-opacity"
           onClick={onClose}
         ></div>
 
         {/* Modal */}
-        <div 
-          className="inline-block align-bottom rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-          style={{
-            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-          }}
-        >
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200">
           {/* Header */}
-          <div 
-            className="flex items-center justify-between px-6 py-4"
-            style={{
-              background: 'linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)',
-              borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-            }}
-          >
-            <h3 
-              className="text-lg font-semibold"
-              style={{ color: '#1e3a5f' }}
-            >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50">
+            <h3 className="text-base font-semibold text-slate-800">
               {title}
             </h3>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-all duration-200"
+              className="p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
             >
-              <FiX className="h-5 w-5" />
+              <FiX className="h-4 w-4" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="px-6 py-5">{children}</div>
+          <div className="px-5 py-4">{children}</div>
 
           {/* Footer */}
           {footer && (
-            <div 
-              className="px-6 py-4"
-              style={{
-                background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
-                borderTop: '1px solid rgba(226, 232, 240, 0.8)',
-              }}
-            >
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200">
               {footer}
             </div>
           )}
