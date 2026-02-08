@@ -33,7 +33,7 @@ const contractVersionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'pending_finance', 'pending_client', 'active', 'rejected', 'cancelled'],
+    enum: ['draft', 'pending_finance', 'pending_client', 'active', 'rejected'],
     default: 'draft'
   },
   // Finance rejection remarks

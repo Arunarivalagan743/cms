@@ -98,8 +98,6 @@ const NotificationBell = () => {
         return <FiXCircle className="h-5 w-5 text-red-600" />;
       case 'amendment':
         return <FiAlertCircle className="h-5 w-5 text-yellow-600" />;
-      case 'cancellation':
-        return <FiXCircle className="h-5 w-5 text-gray-600" />;
       default:
         return <FiBell className="h-5 w-5 text-gray-600" />;
     }

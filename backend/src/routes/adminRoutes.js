@@ -10,6 +10,19 @@ const {
   updatePermissions,
   getSystemLogs,
   getSystemLogStats,
+  getComprehensiveSystemLogs,
+  getComprehensiveStats,
+  getRoles,
+  getActiveRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  getUserAuditLogs,
+  getAuditTrail,
+  getAuditTrailStats,
+  getUserAuditTrail,
+  getRoleAuditTrail,
+  getMyAuditLogs,
 } = require('../controllers/adminController');
 const { protect, authorize, checkPermission } = require('../middleware/auth');
 
@@ -44,7 +57,47 @@ router.put('/permissions/:role', checkPermission('canConfigurePermissions'), upd
 
 // ==================== SYSTEM LOG ROUTES ====================
 
+// Comprehensive system-wide activity logs (SystemLog + AuditLog combined)
+router.get('/system-logs/comprehensive', checkPermission('canViewSystemLogs'), getComprehensiveSystemLogs);
+router.get('/system-logs/comprehensive-stats', checkPermission('canViewSystemLogs'), getComprehensiveStats);
+
+// Legacy system logs (user management only)
 router.get('/system-logs', checkPermission('canViewSystemLogs'), getSystemLogs);
 router.get('/system-logs/stats', checkPermission('canViewSystemLogs'), getSystemLogStats);
+
+// ==================== AUDIT TRAIL ROUTES (New Comprehensive) ====================
+
+// Complete audit trail (Admin view - append-only, all actions)
+router.get('/audit-trail', authorize('super_admin'), getAuditTrail);
+router.get('/audit-trail/stats', authorize('super_admin'), getAuditTrailStats);
+
+// User-specific audit trail
+router.get('/audit-trail/user/:userId', authorize('super_admin'), getUserAuditTrail);
+
+// Role-specific audit trail (shows actions mapped to a specific role)
+router.get('/audit-trail/role/:role', authorize('super_admin'), getRoleAuditTrail);
+
+// My own audit logs (accessible to all authenticated users)
+router.get('/audit-trail/my-logs', getMyAuditLogs);
+
+// Legacy audit logs endpoint
+router.get('/audit-logs', authorize('super_admin'), getUserAuditLogs);
+
+// ==================== ROLE ROUTES ====================
+
+// Get all roles (for role management UI)
+router.get('/roles', checkPermission('canConfigurePermissions'), getRoles);
+
+// Get active roles (for dropdowns in workflow and user creation)
+router.get('/roles/active', getActiveRoles);
+
+// Create new custom role
+router.post('/roles', checkPermission('canConfigurePermissions'), createRole);
+
+// Update existing role
+router.put('/roles/:id', checkPermission('canConfigurePermissions'), updateRole);
+
+// Delete (deactivate) custom role
+router.delete('/roles/:id', checkPermission('canConfigurePermissions'), deleteRole);
 
 module.exports = router;

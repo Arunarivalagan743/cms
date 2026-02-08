@@ -3,13 +3,13 @@ import api from './api';
 // Get dashboard stats
 export const getDashboardStats = async () => {
   const response = await api.get('/dashboard/stats');
-  // Backend returns { success, data: { stats } }
   return response.data?.data || {};
 };
 
-// Get pending approvals
-export const getPendingApprovals = async () => {
-  const response = await api.get('/dashboard/pending');
+// Get pending approvals (optional type filter: 'finance' or 'client')
+export const getPendingApprovals = async (type) => {
+  const params = type ? { type } : {};
+  const response = await api.get('/dashboard/pending', { params });
   return response.data?.data || [];
 };
 
@@ -19,9 +19,22 @@ export const getActiveContracts = async () => {
   return response.data?.data || [];
 };
 
-// Get rejected contracts
-export const getRejectedContracts = async () => {
-  const response = await api.get('/dashboard/rejected');
+// Get rejected contracts (optional rejectedByRole filter: 'finance' or 'client')
+export const getRejectedContracts = async (rejectedByRole) => {
+  const params = rejectedByRole ? { rejectedByRole } : {};
+  const response = await api.get('/dashboard/rejected', { params });
+  return response.data?.data || [];
+};
+
+// Get recent activity
+export const getRecentActivity = async (limit = 10) => {
+  const response = await api.get('/dashboard/recent-activity', { params: { limit } });
+  return response.data?.data || [];
+};
+
+// Get users breakdown (admin only)
+export const getUsersBreakdown = async (params = {}) => {
+  const response = await api.get('/dashboard/users-breakdown', { params });
   return response.data?.data || [];
 };
 

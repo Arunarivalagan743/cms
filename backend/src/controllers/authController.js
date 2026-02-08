@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const RolePermission = require('../models/RolePermission');
 const { createSystemLog } = require('../utils/systemLog');
+const { createAuditLog } = require('../utils/auditLog');
 
 // Helper function to get user permissions from database
 const getUserPermissions = async (role) => {
@@ -18,7 +19,6 @@ const getUserPermissions = async (role) => {
     canApproveContract: false,
     canRejectContract: false,
     canAmendContract: false,
-    canCancelContract: false,
     canViewAllContracts: false,
     canViewOwnContracts: true,
     canManageUsers: false,
@@ -59,6 +59,15 @@ exports.login = async (req, res, next) => {
         req,
         success: false,
       });
+      await createAuditLog({
+        action: 'login_failed',
+        userId: null,
+        role: 'unknown',
+        remarks: `Failed login: user not found for ${email}`,
+        metadata: { email, reason: 'User not found' },
+        req,
+        success: false
+      });
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -73,6 +82,15 @@ exports.login = async (req, res, next) => {
         details: { email, reason: 'Password not set' },
         req,
         success: false,
+      });
+      await createAuditLog({
+        action: 'login_failed',
+        userId: user._id,
+        role: user.role,
+        remarks: 'Password not set yet',
+        metadata: { email, reason: 'Password not set' },
+        req,
+        success: false
       });
       return res.status(401).json({
         success: false,
@@ -91,6 +109,15 @@ exports.login = async (req, res, next) => {
         req,
         success: false,
       });
+      await createAuditLog({
+        action: 'login_failed',
+        userId: user._id,
+        role: user.role,
+        remarks: 'Invalid password',
+        metadata: { email, reason: 'Invalid password' },
+        req,
+        success: false
+      });
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -105,6 +132,15 @@ exports.login = async (req, res, next) => {
         req,
         success: false,
       });
+      await createAuditLog({
+        action: 'login_failed',
+        userId: user._id,
+        role: user.role,
+        remarks: 'Account deactivated',
+        metadata: { email, reason: 'Account deactivated' },
+        req,
+        success: false
+      });
       return res.status(401).json({
         success: false,
         message: 'Your account is deactivated. Please contact administrator.'
@@ -118,6 +154,14 @@ exports.login = async (req, res, next) => {
       details: { email, role: user.role },
       req,
       success: true,
+    });
+    await createAuditLog({
+      action: 'login_success',
+      userId: user._id,
+      role: user.role,
+      remarks: `User logged in successfully`,
+      metadata: { email, role: user.role },
+      req
     });
 
     sendTokenResponse(user, 200, res);
@@ -160,6 +204,14 @@ exports.logout = async (req, res, next) => {
       details: { email: req.user.email },
       req,
       success: true,
+    });
+    await createAuditLog({
+      action: 'logout',
+      userId: req.user._id,
+      role: req.user.role,
+      remarks: 'User logged out',
+      metadata: { email: req.user.email },
+      req
     });
   }
 

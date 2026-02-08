@@ -8,15 +8,18 @@ import {
 import { formatTimeAgo } from '../utils/helpers';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
+import { useAuth } from '../context/AuthContext';
 
 const Notifications = () => {
+  const { loading: authLoading, user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all' or 'unread'
 
   useEffect(() => {
+    if (authLoading || !user) return;
     fetchNotifications();
-  }, []);
+  }, [authLoading, user]);
 
   const fetchNotifications = async () => {
     try {
@@ -59,8 +62,6 @@ const Notifications = () => {
         return <FiXCircle className="h-6 w-6 text-red-600" />;
       case 'amendment':
         return <FiAlertCircle className="h-6 w-6 text-yellow-600" />;
-      case 'cancellation':
-        return <FiXCircle className="h-6 w-6 text-gray-600" />;
       default:
         return <FiBell className="h-6 w-6 text-gray-600" />;
     }
@@ -71,7 +72,7 @@ const Notifications = () => {
       ? notifications.filter((n) => !n.isRead)
       : notifications;
 
-  if (loading) {
+  if (authLoading || loading) {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 

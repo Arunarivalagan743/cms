@@ -50,7 +50,7 @@ const contractSchema = new mongoose.Schema({
 contractSchema.index({ client: 1 });
 contractSchema.index({ createdBy: 1 });
 contractSchema.index({ createdAt: -1 });
-contractSchema.index({ contractNumber: 1 });
+// contractNumber already has unique: true, no need for separate index
 contractSchema.index({ client: 1, createdAt: -1 });
 contractSchema.index({ createdBy: 1, createdAt: -1 });
 

@@ -9,8 +9,7 @@ const {
   submitContract,
   approveContract,
   rejectContract,
-  createAmendment,
-  cancelContract,
+  amendContract,
   getContractVersions,
   getContractAudit,
   sendRemarksToClient
@@ -30,9 +29,10 @@ router.get('/:id', getContract);
 // Get contract versions
 router.get('/:id/versions', getContractVersions);
 
-// Get contract audit trail (requires canViewAuditLogs permission)
-router.get('/:id/audit', checkPermission('canViewAuditLogs'), getContractAudit);
-router.get('/:id/audit-logs', checkPermission('canViewAuditLogs'), getContractAudit);
+// Get contract audit trail (accessible to users who can view the contract)
+// Super Admin, Legal (for their contracts), Finance, and Clients (for their contracts) can view audit logs
+router.get('/:id/audit', authorize('super_admin', 'legal', 'finance', 'client'), getContractAudit);
+router.get('/:id/audit-logs', authorize('super_admin', 'legal', 'finance', 'client'), getContractAudit);
 
 // Create contract (requires canCreateContract permission)
 router.post(
@@ -95,21 +95,19 @@ router.post(
   rejectContract
 );
 
-// Create amendment (requires canAmendContract permission)
+// Create amendment from rejected contract (requires canEditDraft or canEditSubmitted permission)
+// Legal users can create amendments since they create a new draft version
 router.post(
   '/:id/amend',
-  checkPermission('canAmendContract'),
+  checkPermission('canEditDraft', 'canEditSubmitted'),
   [
     body('contractName').optional().notEmpty().withMessage('Contract name cannot be empty'),
     body('effectiveDate').optional().isISO8601().withMessage('Valid effective date is required'),
     body('amount').optional().isNumeric().withMessage('Amount must be a number')
   ],
   validate,
-  createAmendment
+  amendContract
 );
-
-// Cancel contract (requires canCancelContract permission)
-router.post('/:id/cancel', checkPermission('canCancelContract'), cancelContract);
 
 // Send rejection remarks to client (Legal only - when Finance didn't send to client)
 router.post(

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   FiSearch,
   FiPlus,
@@ -9,7 +9,9 @@ import {
   FiRefreshCw,
   FiMail,
   FiUser,
+  FiEye,
 } from 'react-icons/fi';
+import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { getContracts } from '../services/contractService';
 import { formatDate, formatCurrency } from '../utils/helpers';
@@ -18,11 +20,13 @@ import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
 
 const ContractList = () => {
-  const { hasPermission, isSuperAdmin, isLegal, isFinance, isClient } = useAuth();
+  const { hasPermission, isSuperAdmin, isLegal, isFinance, isClient, loading: authLoading, user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [workflowFilter, setWorkflowFilter] = useState(searchParams.get('workflow') || '');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     dateFrom: '',
@@ -35,14 +39,11 @@ const ContractList = () => {
     clientEmail: '',
     versionFilter: '',
   });
-  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    // Prevent double fetch in StrictMode
-    if (fetchedRef.current && statusFilter === '') return;
-    fetchedRef.current = true;
+    if (authLoading || !user) return;
     fetchContracts();
-  }, [statusFilter]);
+  }, [authLoading, user, statusFilter]);
 
   const fetchContracts = async () => {
     try {
@@ -51,20 +52,19 @@ const ContractList = () => {
       
       const contractsArray = Array.isArray(contractsData) ? contractsData : [];
       
-      // Map the contracts to include currentVersion details
+      // Map the contracts - data comes flat from backend (not nested in currentVersion)
       const mappedContracts = contractsArray.map(contract => {
-        const version = contract.currentVersion || {};
         return {
-          _id: contract._id,
+          _id: contract.contractId || contract._id,
           contractNumber: contract.contractNumber,
-          contractName: version.contractName || contract.contractName || 'Untitled Contract',
+          contractName: contract.contractName || 'Untitled Contract',
           client: contract.client,
-          amount: version.amount || contract.amount || 0,
-          effectiveDate: version.effectiveDate || contract.effectiveDate,
-          status: version.status || contract.status || 'draft',
+          amount: contract.amount || 0,
+          effectiveDate: contract.effectiveDate,
+          status: contract.status || 'draft',
           createdAt: contract.createdAt,
-          currentVersion: version,
-          versionNumber: version.versionNumber || 1,
+          versionNumber: contract.versionNumber || 1,
+          workflow: contract.workflow || { name: 'N/A' }
         };
       });
       
@@ -94,6 +94,8 @@ const ContractList = () => {
     });
     setStatusFilter('');
     setSearchTerm('');
+    setWorkflowFilter('');
+    setSearchParams({});
   };
 
   // Get unique versions for filter dropdown
@@ -105,6 +107,9 @@ const ContractList = () => {
       contract.contractNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.client?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Workflow filter
+    const matchesWorkflow = !workflowFilter || contract.workflow?.id === workflowFilter;
 
     // Date filters
     const contractDate = new Date(contract.effectiveDate);
@@ -127,7 +132,7 @@ const ContractList = () => {
     const matchesVersion = !filters.versionFilter || 
       contract.versionNumber === parseInt(filters.versionFilter);
 
-    return matchesSearch && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax && matchesClientName && matchesClientEmail && matchesVersion;
+    return matchesSearch && matchesWorkflow && matchesDateFrom && matchesDateTo && matchesAmountMin && matchesAmountMax && matchesClientName && matchesClientEmail && matchesVersion;
   }).sort((a, b) => {
     const sortKey = filters.sortBy;
     const order = filters.sortOrder === 'asc' ? 1 : -1;
@@ -140,7 +145,7 @@ const ContractList = () => {
     return (a[sortKey] || '').localeCompare(b[sortKey] || '') * order;
   });
 
-  if (loading) {
+  if (authLoading || loading) {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 
@@ -148,9 +153,26 @@ const ContractList = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-slate-800">
-          Contracts
-        </h2>
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-800">
+            Contracts
+          </h2>
+          {workflowFilter && (
+            <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+              <FiFilter className="h-3 w-3" />
+              Filtered by workflow
+              <button
+                onClick={() => {
+                  setWorkflowFilter('');
+                  setSearchParams({});
+                }}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Clear
+              </button>
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -196,7 +218,6 @@ const ContractList = () => {
               <option value="pending_client">Pending Client</option>
               <option value="active">Active</option>
               <option value="rejected">Rejected</option>
-              <option value="cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -362,6 +383,11 @@ const ContractList = () => {
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Client
                   </th>
+                  {!isClient && (
+                    <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
+                      Workflow
+                    </th>
+                  )}
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
                     Version
                   </th>
@@ -407,6 +433,19 @@ const ContractList = () => {
                         </p>
                       </div>
                     </td>
+                    {!isClient && (
+                      <td className="px-4 py-4">
+                        <div className="flex items-center">
+                          <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-medium ${
+                            contract.workflow?.name?.includes('Direct Client') 
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                          }`}>
+                            {contract.workflow?.name || 'N/A'}
+                          </span>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-1">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -438,13 +477,15 @@ const ContractList = () => {
                       <StatusBadge status={contract.status} />
                     </td>
                     <td className="px-4 py-4">
-                      <Link
+                      <Button
+                        as={Link}
                         to={`/contracts/${contract._id}`}
-                        className="font-medium text-sm transition-colors"
-                        style={{ color: '#2d8bc9' }}
+                        variant="outline"
+                        size="sm"
+                        iconLeading={<FiEye />}
                       >
                         View Details
-                      </Link>
+                      </Button>
                     </td>
                   </tr>
                 ))}

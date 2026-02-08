@@ -8,7 +8,20 @@ import {
   FiTrash2,
   FiUserCheck,
   FiUserX,
+  FiUserPlus,
   FiShield,
+  FiCheckCircle,
+  FiXCircle,
+  FiFileText,
+  FiActivity,
+  FiAlertCircle,
+  FiSend,
+  FiRefreshCw,
+  FiSlash,
+  FiMessageSquare,
+  FiInfo,
+  FiClock,
+  FiDollarSign,
 } from 'react-icons/fi';
 import {
   getUsers,
@@ -17,30 +30,41 @@ import {
   deleteUser,
   resendInvite,
 } from '../services/userService';
-import { formatDate } from '../utils/helpers';
+import { getActiveRoles, getUserAuditLogs } from '../services/adminService';
+import { formatDate, formatCurrency } from '../utils/helpers';
 import LoadingSpinner from '../components/LoadingSpinner';
 import RoleBadge from '../components/RoleBadge';
+import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import Button from '../components/ui/Button';
 import Toast from '../components/Toast';
 import EmptyState from '../components/EmptyState';
+import { useAuth } from '../context/AuthContext';
 
 const UserManagement = () => {
+  const { loading: authLoading, user } = useAuth();
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userActivity, setUserActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', role: 'client' });
   const [editFormData, setEditFormData] = useState({ name: '', email: '', role: '', isActive: true });
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     fetchUsers();
-  }, [roleFilter]);
+    fetchRoles();
+  }, [authLoading, user, roleFilter]);
 
   const fetchUsers = async () => {
     try {
@@ -52,6 +76,23 @@ const UserManagement = () => {
       setUsers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const data = await getActiveRoles();
+      setRoles(data);
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+      // Fallback to default roles
+      setRoles([
+        { name: 'legal', displayName: 'Legal' },
+        { name: 'finance', displayName: 'Finance' },
+        { name: 'senior_finance', displayName: 'Senior Finance' },
+        { name: 'client', displayName: 'Client' },
+        { name: 'super_admin', displayName: 'Super Admin' },
+      ]);
     }
   };
 
@@ -158,12 +199,28 @@ const UserManagement = () => {
     }
   };
 
+  const handleViewActivity = async (user) => {
+    setSelectedUser(user);
+    setShowActivityModal(true);
+    setActivityLoading(true);
+    try {
+      const data = await getUserAuditLogs(user._id);
+      setUserActivity(data || []);
+    } catch (error) {
+      console.error('Failed to fetch user activity:', error);
+      setUserActivity([]);
+      setToast({ message: 'Failed to load user activity', type: 'error' });
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
   const filteredUsers = users.filter((user) =>
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (authLoading || loading) {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 
@@ -206,10 +263,9 @@ const UserManagement = () => {
               onChange={(e) => setRoleFilter(e.target.value)}
             >
               <option value="">All Roles</option>
-              <option value="client">Client</option>
-              <option value="legal">Legal</option>
-              <option value="finance">Finance</option>
-              <option value="super_admin">Super Admin</option>
+              {roles.map(role => (
+                <option key={role.name} value={role.name}>{role.displayName}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -295,6 +351,15 @@ const UserManagement = () => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
+                        {/* View Activity Button */}
+                        <button
+                          onClick={() => handleViewActivity(user)}
+                          className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="View Activity"
+                        >
+                          <FiActivity className="h-4 w-4" />
+                        </button>
+
                         {/* Edit Button */}
                         <button
                           onClick={() => handleEditClick(user)}
@@ -417,10 +482,9 @@ const UserManagement = () => {
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             >
-              <option value="client">Client</option>
-              <option value="legal">Legal</option>
-              <option value="finance">Finance</option>
-              <option value="super_admin">Super Admin</option>
+              {roles.map(role => (
+                <option key={role.name} value={role.name}>{role.displayName}</option>
+              ))}
             </select>
           </div>
         </form>
@@ -505,11 +569,9 @@ const UserManagement = () => {
               value={editFormData.role}
               onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
             >
-              <option value="client">Client</option>
-              <option value="legal">Legal</option>
-              <option value="finance">Finance</option>
-              <option value="senior_finance">Senior Finance</option>
-              <option value="super_admin">Super Admin</option>
+              {roles.map(role => (
+                <option key={role.name} value={role.name}>{role.displayName}</option>
+              ))}
             </select>
             {selectedUser && editFormData.role !== selectedUser.role && (
               <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
@@ -573,14 +635,14 @@ const UserManagement = () => {
             >
               Cancel
             </button>
-            <button
-              type="button"
+            <Button
+              variant="destructive"
               onClick={handleDeleteUser}
               disabled={submitting}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              loading={submitting}
             >
-              {submitting ? 'Deactivating...' : 'Deactivate User'}
-            </button>
+              Deactivate User
+            </Button>
           </div>
         }
       >
@@ -607,6 +669,415 @@ const UserManagement = () => {
                 <div className="text-gray-500">Role:</div>
                 <div><RoleBadge role={selectedUser.role} /></div>
               </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* User Activity Modal */}
+      <Modal
+        isOpen={showActivityModal}
+        onClose={() => {
+          setShowActivityModal(false);
+          setSelectedUser(null);
+          setUserActivity([]);
+        }}
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white">
+              <FiUser className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">{selectedUser?.name}'s Activity</h3>
+              <p className="text-sm text-slate-500">{selectedUser?.email}</p>
+            </div>
+          </div>
+        }
+      >
+        <div className="max-h-[70vh] overflow-y-auto">
+          {activityLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="md" />
+            </div>
+          ) : userActivity.length === 0 ? (
+            <div className="text-center py-12">
+              <FiAlertCircle className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500">No activity found for this user</p>
+              <p className="text-sm text-slate-400 mt-1">Activities will appear here when the user performs actions</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {userActivity.map((activity, index) => {
+                // Action-specific styling
+                const actionStyles = {
+                  created: { icon: FiFileText, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+                  updated: { icon: FiEdit2, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200' },
+                  submitted: { icon: FiSend, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+                  approved: { icon: FiCheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+                  rejected: { icon: FiXCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+                  amended: { icon: FiRefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+                  user_created: { icon: FiUser, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+                  user_updated: { icon: FiEdit2, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+                  user_deleted: { icon: FiTrash2, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+                  role_changed: { icon: FiRefreshCw, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
+                  invite_sent: { icon: FiMail, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+                };
+                const style = actionStyles[activity.action] || actionStyles.updated;
+                const ActionIcon = style.icon;
+                
+                return (
+                  <div key={activity._id || index} className={`border ${style.border} rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
+                    {/* Header Section */}
+                    <div className={`${style.bg} px-5 py-4 border-b ${style.border}`}>
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 ${style.bg} border ${style.border} rounded-lg`}>
+                            <ActionIcon className={`h-5 w-5 ${style.color}`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className={`font-bold capitalize text-base ${style.color}`}>
+                                {activity.action.replace(/_/g, ' ')}
+                              </h4>
+                              {activity.resourceType && (
+                                <span className="px-2 py-0.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-700">
+                                  {activity.resourceType}
+                                </span>
+                              )}
+                              {activity.versionDetails?.versionNumber && (
+                                <span className="px-2 py-0.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-700">
+                                  Version {activity.versionDetails.versionNumber}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                              <FiClock className="h-3 w-3" />
+                              <span className="font-medium">{formatDate(activity.createdAt)}</span>
+                              <span>•</span>
+                              <span>{new Date(activity.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-slate-500 mb-1">Performed By</div>
+                          <div className="flex items-center gap-2 justify-end">
+                            <FiUser className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="font-semibold text-slate-800">{activity.performedBy?.name || 'System'}</span>
+                          </div>
+                          {activity.performedBy?.email && (
+                            <div className="text-xs text-slate-500 mt-0.5">{activity.performedBy.email}</div>
+                          )}
+                          <div className="mt-1">
+                            <RoleBadge role={activity.roleAtTime || activity.performedBy?.role} size="xs" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="bg-white px-5 py-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Left Column - Contract or User Information */}
+                        <div className="space-y-2">
+                          <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                            {activity.resourceType === 'User' ? (
+                              <><FiUser className="h-3 w-3" /> User Information</>
+                            ) : (
+                              <><FiFileText className="h-3 w-3" /> Contract Information</>
+                            )}
+                          </h5>
+                          <div className="bg-slate-50 rounded p-3 space-y-1.5">
+                            {activity.resourceType === 'User' ? (
+                              // User-related activity
+                              <>
+                                {activity.targetUser ? (
+                                  // Activity on another user
+                                  <>
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-slate-600">Target User:</span>
+                                      <span className="font-medium text-slate-800">{activity.targetUser.name}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-slate-600">Email:</span>
+                                      <span className="font-mono text-xs text-slate-700">{activity.targetUser.email}</span>
+                                    </div>
+                                    {activity.targetUser.role && (
+                                      <div className="flex justify-between text-sm items-center">
+                                        <span className="text-slate-600">Role:</span>
+                                        <RoleBadge role={activity.targetUser.role} />
+                                      </div>
+                                    )}
+                                  </>
+                                ) : activity.details ? (
+                                  // Activity with details (user_created, permission_updated, etc.)
+                                  <>
+                                    {activity.details.userName && (
+                                      <>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Created By Admin:</span>
+                                          <span className="font-medium text-slate-800">{activity.performedBy?.name}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Admin Email:</span>
+                                          <span className="font-mono text-xs text-slate-700">{activity.performedBy?.email}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm items-center">
+                                          <span className="text-slate-600">Admin Role:</span>
+                                          <RoleBadge role={activity.performedBy?.role} />
+                                        </div>
+                                        <div className="h-px bg-slate-200 my-2"></div>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Created User:</span>
+                                          <span className="font-medium text-slate-800">{activity.details.userName}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">User Email:</span>
+                                          <span className="font-mono text-xs text-slate-700">{activity.details.userEmail}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm items-center">
+                                          <span className="text-slate-600">Assigned Role:</span>
+                                          <RoleBadge role={activity.details.assignedRole} />
+                                        </div>
+                                        <div className="text-xs text-slate-500 mt-2 bg-green-50 p-2 rounded border border-green-200">
+                                          <div className="flex items-start gap-1">
+                                            <FiUserPlus className="h-3 w-3 text-green-600 mt-0.5" />
+                                            <span className="text-green-800">New user account created and credentials sent</span>
+                                          </div>
+                                        </div>
+                                      </>
+                                    )}
+                                    {activity.details.role && activity.action === 'permission_updated' && (
+                                      <>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Admin:</span>
+                                          <span className="font-medium text-slate-800">{activity.performedBy?.name}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Admin Email:</span>
+                                          <span className="font-mono text-xs text-slate-700">{activity.performedBy?.email}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm items-center">
+                                          <span className="text-slate-600">Admin Role:</span>
+                                          <RoleBadge role={activity.performedBy?.role} />
+                                        </div>
+                                        <div className="h-px bg-slate-200 my-2"></div>
+                                        <div className="flex justify-between text-sm items-center">
+                                          <span className="text-slate-600">Updated Permissions For:</span>
+                                          <RoleBadge role={activity.details.role} />
+                                        </div>
+                                        <div className="text-xs text-slate-500 mt-2 bg-purple-50 p-2 rounded border border-purple-200">
+                                          <div className="flex items-start gap-1">
+                                            <FiShield className="h-3 w-3 text-purple-600 mt-0.5" />
+                                            <span className="text-purple-800">Role permissions and access levels were modified</span>
+                                          </div>
+                                        </div>
+                                      </>
+                                    )}
+                                    {activity.details.email && !activity.details.userEmail && activity.action === 'invite_sent' && (
+                                      <>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Invite Sent To:</span>
+                                          <span className="font-mono text-xs text-slate-700">{activity.details.email}</span>
+                                        </div>
+                                      </>
+                                    )}
+                                    {(activity.action === 'login' || activity.action === 'logout') && (
+                                      <>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">User:</span>
+                                          <span className="font-medium text-slate-800">{activity.performedBy?.name}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                          <span className="text-slate-600">Email:</span>
+                                          <span className="font-mono text-xs text-slate-700">{activity.performedBy?.email}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm items-center">
+                                          <span className="text-slate-600">Role:</span>
+                                          <RoleBadge role={activity.roleAtTime || activity.performedBy?.role} />
+                                        </div>
+                                      </>
+                                    )}
+                                    {!activity.details.userName && !activity.details.role && activity.action !== 'login' && activity.action !== 'logout' && activity.action !== 'invite_sent' && (
+                                      <div className="text-sm text-slate-500 italic">Activity performed by {activity.performedBy?.name}</div>
+                                    )}
+                                  </>
+                                ) : (
+                                  // Fallback for activities without details
+                                  <>
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-slate-600">Performed By:</span>
+                                      <span className="font-medium text-slate-800">{activity.performedBy?.name}</span>
+                                    </div>
+                                    {activity.performedBy?.email && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600">Email:</span>
+                                        <span className="font-mono text-xs text-slate-700">{activity.performedBy.email}</span>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              // Contract-related activity
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Contract Number:</span>
+                                  <span className="font-mono font-semibold text-slate-800">{activity.contractNumber || 'N/A'}</span>
+                                </div>
+                                {activity.versionDetails && (
+                                  <>
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-slate-600">Contract Name:</span>
+                                      <span className="font-medium text-slate-800">{activity.versionDetails.contractName}</span>
+                                    </div>
+                                    {activity.versionDetails.amount && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600">Amount:</span>
+                                        <span className="font-semibold text-emerald-700">{formatCurrency(activity.versionDetails.amount)}</span>
+                                      </div>
+                                    )}
+                                    {activity.versionDetails.effectiveDate && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600">Effective Date:</span>
+                                        <span className="font-medium text-slate-800">{formatDate(activity.versionDetails.effectiveDate)}</span>
+                                      </div>
+                                    )}
+                                    {activity.versionDetails.status && (
+                                      <div className="flex justify-between text-sm items-center">
+                                        <span className="text-slate-600">Status:</span>
+                                        <StatusBadge status={activity.versionDetails.status} />
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right Column - Additional Details */}
+                        <div className="space-y-2">
+                          <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                            <FiInfo className="h-3 w-3" /> Additional Details
+                          </h5>
+                          <div className="bg-slate-50 rounded p-3 space-y-1.5">
+                            {activity.versionDetails ? (
+                              // Contract version details
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Version Number:</span>
+                                  <span className="font-bold text-primary-700">V{activity.versionDetails.versionNumber}</span>
+                                </div>
+                                {activity.versionDetails.approvedByFinance && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-slate-600">Finance Approved:</span>
+                                    <span className="font-medium text-emerald-700">{activity.versionDetails.approvedByFinance.name}</span>
+                                  </div>
+                                )}
+                                {activity.versionDetails.approvedByClient && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-slate-600">Client Approved:</span>
+                                    <span className="font-medium text-emerald-700">{activity.versionDetails.approvedByClient.name}</span>
+                                  </div>
+                                )}
+                              </>
+                            ) : activity.resourceType === 'User' ? (
+                              // User activity additional details
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Action Type:</span>
+                                  <span className="font-medium text-slate-800 capitalize">{activity.action.replace(/_/g, ' ')}</span>
+                                </div>
+                                {activity.details?.fromRole && activity.details?.toRole && (
+                                  <>
+                                    <div className="flex justify-between text-sm items-center">
+                                      <span className="text-slate-600">Previous Role:</span>
+                                      <RoleBadge role={activity.details.fromRole} size="xs" />
+                                    </div>
+                                    <div className="flex justify-between text-sm items-center">
+                                      <span className="text-slate-600">New Role:</span>
+                                      <RoleBadge role={activity.details.toRole} size="xs" />
+                                    </div>
+                                  </>
+                                )}
+                                {activity.details?.emailSent !== undefined && (
+                                  <div className="flex justify-between text-sm items-center">
+                                    <span className="text-slate-600">Email Sent:</span>
+                                    <span className={`font-medium ${activity.details.emailSent ? 'text-green-700' : 'text-red-700'}`}>
+                                      {activity.details.emailSent ? 'Yes' : 'Failed'}
+                                    </span>
+                                  </div>
+                                )}
+                                {activity.success !== undefined && (
+                                  <div className="flex justify-between text-sm items-center">
+                                    <span className="text-slate-600">Status:</span>
+                                    <span className={`font-medium ${activity.success ? 'text-green-700' : 'text-red-700'}`}>
+                                      {activity.success ? 'Success' : 'Failed'}
+                                    </span>
+                                  </div>
+                                )}
+                                {activity.ipAddress && activity.ipAddress !== 'unknown' && (
+                                  <div className="flex justify-between text-sm items-center">
+                                    <span className="text-slate-600">IP Address:</span>
+                                    <span className="font-mono text-xs text-slate-700">{activity.ipAddress}</span>
+                                  </div>
+                                )}
+                                {(activity.action === 'login' || activity.action === 'logout') && (
+                                  <div className="text-xs text-slate-500 mt-2 bg-blue-50 p-2 rounded border border-blue-200">
+                                    <div className="flex items-start gap-1">
+                                      <FiInfo className="h-3 w-3 text-blue-600 mt-0.5" />
+                                      <span className="text-blue-800">
+                                        {activity.action === 'login' ? 'User successfully authenticated and accessed the system' : 'User logged out from the system'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="text-sm text-slate-500 italic">No additional details available</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Remarks Section */}
+                      {(activity.remarks || activity.versionDetails?.financeRemarkInternal || activity.versionDetails?.financeRemarkClient || activity.versionDetails?.clientRemark) && (
+                        <div className="mt-4 pt-4 border-t border-slate-200">
+                          <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1 mb-2">
+                            <FiMessageSquare className="h-3 w-3" /> Remarks & Comments
+                          </h5>
+                          <div className="space-y-2">
+                            {activity.remarks && (
+                              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-slate-600 mb-1">Action Remark:</p>
+                                <p className="text-sm text-slate-800">"{activity.remarks}"</p>
+                              </div>
+                            )}
+                            {activity.versionDetails?.financeRemarkInternal && (
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-amber-800 mb-1">Finance (Internal):</p>
+                                <p className="text-sm text-amber-900">"{activity.versionDetails.financeRemarkInternal}"</p>
+                              </div>
+                            )}
+                            {activity.versionDetails?.financeRemarkClient && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-blue-800 mb-1">Finance (Client-Facing):</p>
+                                <p className="text-sm text-blue-900">"{activity.versionDetails.financeRemarkClient}"</p>
+                              </div>
+                            )}
+                            {activity.versionDetails?.clientRemark && (
+                              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-purple-800 mb-1">Client Remark:</p>
+                                <p className="text-sm text-purple-900">"{activity.versionDetails.clientRemark}"</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

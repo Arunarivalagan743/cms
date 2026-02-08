@@ -21,14 +21,12 @@
 
 @layer components {
   .btn-primary {
-    @apply text-white font-medium py-2.5 px-5 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none text-white shadow-sm h-9 px-4 text-sm gap-2;
     background: #0284c7;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
   .btn-primary:hover:not(:disabled) {
     background: #0369a1;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
   
   .btn-primary:active:not(:disabled) {
@@ -36,7 +34,7 @@
   }
   
   .btn-secondary {
-    @apply font-medium py-2.5 px-5 rounded border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium rounded-lg border transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none shadow-sm h-9 px-4 text-sm gap-2;
     background: #ffffff;
     border-color: #e2e8f0;
     color: #475569;
@@ -48,9 +46,8 @@
   }
   
   .btn-danger {
-    @apply text-white font-medium py-2.5 px-5 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none text-white shadow-sm h-9 px-4 text-sm gap-2;
     background: #dc2626;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
   .btn-danger:hover:not(:disabled) {
@@ -58,13 +55,20 @@
   }
   
   .input-field {
-    @apply w-full px-3 py-2.5 rounded border focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-150;
-    background: #ffffff;
+    @apply w-full px-3.5 py-2.5 rounded-lg border bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-150;
     border-color: #e2e8f0;
   }
   
+  .input-field:disabled {
+    @apply bg-slate-50 text-slate-500 cursor-not-allowed;
+  }
+  
   .input-field:focus {
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.08);
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5;
   }
   
   .card {
@@ -116,5 +120,47 @@
   .stat-card:hover {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   }
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes loadingLine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.animate-loading-line {
+  animation: loadingLine 1.2s ease-in-out infinite;
 }
 

@@ -4,6 +4,7 @@ import { FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { resetPassword } from '../services/authService';
 import Toast from '../components/Toast';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Button from '../components/ui/Button';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -133,16 +134,15 @@ const ResetPassword = () => {
             </div>
 
             {/* Submit Button */}
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="w-full py-3 px-4 rounded font-medium text-white transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
-              style={{
-                background: 'linear-gradient(180deg, #4da6d8 0%, #2d8bc9 50%, #1a6fa8 100%)',
-              }}
+            <Button
+              type="submit"
+              disabled={loading}
+              loading={loading}
+              size="lg"
+              className="w-full"
             >
-              {loading ? 'Resetting...' : 'RESET PASSWORD'}
-            </button>
+              Reset Password
+            </Button>
           </form>
         </div>
       </div>

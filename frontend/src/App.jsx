@@ -21,6 +21,8 @@ import Notifications from './pages/Notifications';
 import SystemLogs from './pages/SystemLogs';
 import WorkflowSettings from './pages/WorkflowSettings';
 import RolePermissions from './pages/RolePermissions';
+import AuditTrail from './pages/AuditTrail';
+import MyActivity from './pages/MyActivity';
 
 function App() {
   return (
@@ -56,6 +58,7 @@ function App() {
             />
             <Route path="contracts/:id" element={<ContractDetails />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="my-activity" element={<MyActivity />} />
             <Route
               path="users"
               element={
@@ -70,6 +73,14 @@ function App() {
               element={
                 <ProtectedRoute requiredPermissions={['canViewSystemLogs']}>
                   <SystemLogs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/audit-trail"
+              element={
+                <ProtectedRoute requiredPermissions={['canViewAuditLogs']}>
+                  <AuditTrail />
                 </ProtectedRoute>
               }
             />

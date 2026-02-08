@@ -15,17 +15,12 @@ import {
 import {
   getWorkflows,
   createWorkflowVersion,
+  getActiveRoles,
 } from '../services/adminService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-
-const roleOptions = [
-  { value: 'legal', label: 'Legal' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'senior_finance', label: 'Senior Finance' },
-  { value: 'client', label: 'Client' },
-];
+import { useAuth } from '../context/AuthContext';
 
 const actionOptions = [
   { value: 'submit', label: 'Submit' },
@@ -35,7 +30,9 @@ const actionOptions = [
 ];
 
 const WorkflowSettings = () => {
+  const { loading: authLoading, user } = useAuth();
   const [workflows, setWorkflows] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingWorkflow, setEditingWorkflow] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -59,8 +56,10 @@ const WorkflowSettings = () => {
   };
 
   useEffect(() => {
+    if (authLoading || !user) return;
     fetchWorkflows();
-  }, []);
+    fetchRoles();
+  }, [authLoading, user]);
 
   const fetchWorkflows = async () => {
     try {
@@ -71,6 +70,27 @@ const WorkflowSettings = () => {
       setToast({ message: 'Failed to load workflows', type: 'error' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const data = await getActiveRoles();
+      // Convert to dropdown format
+      const roleOptions = data.map(role => ({
+        value: role.name,
+        label: role.displayName
+      }));
+      setRoles(roleOptions);
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+      // Fallback to default roles if API fails
+      setRoles([
+        { value: 'legal', label: 'Legal' },
+        { value: 'finance', label: 'Finance' },
+        { value: 'senior_finance', label: 'Senior Finance' },
+        { value: 'client', label: 'Client' },
+      ]);
     }
   };
 
@@ -178,7 +198,7 @@ const WorkflowSettings = () => {
     });
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 
@@ -222,73 +242,90 @@ const WorkflowSettings = () => {
         </div>
       </div>
 
-      {/* Current Active Workflow */}
-      {activeWorkflow ? (
-        <div className="card border-2 border-green-500">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-gray-900">{activeWorkflow.name}</h3>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-                  <FiCheck className="h-4 w-4 mr-1" />
-                  Active (v{activeWorkflow.version})
-                </span>
-              </div>
-              {activeWorkflow.description && (
-                <p className="text-gray-600 text-sm mt-1">{activeWorkflow.description}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-2">
-                Created: {formatDate(activeWorkflow.createdAt)}
-                {activeWorkflow.createdBy && ` by ${activeWorkflow.createdBy.name || activeWorkflow.createdBy.email}`}
-              </p>
-            </div>
+      {/* All Workflows */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">All Workflows ({workflows.length})</h3>
+        
+        {workflows.length === 0 ? (
+          <div className="card text-center py-12">
+            <FiSettings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No workflows found</h3>
+            <p className="text-gray-600 mt-1">Create your first workflow to define approval steps</p>
+            <button onClick={handleCreateNew} className="btn-primary mt-4">
+              Create Workflow
+            </button>
           </div>
-
-          {/* Workflow Steps Visualization */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <div className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 whitespace-nowrap">
-              Contract Created
-            </div>
-            <FiArrowRight className="h-5 w-5 text-gray-400 mx-1 flex-shrink-0" />
-            
-            {activeWorkflow.steps
-              .filter(s => s.isActive)
-              .sort((a, b) => a.order - b.order)
-              .map((step, idx, arr) => (
-                <div key={idx} className="flex items-center">
-                  <div className="flex flex-col items-center">
-                    <div className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap
-                      ${step.role === 'legal' ? 'bg-blue-100 text-blue-700' : ''}
-                      ${step.role === 'finance' || step.role === 'senior_finance' ? 'bg-green-100 text-green-700' : ''}
-                      ${step.role === 'client' ? 'bg-purple-100 text-purple-700' : ''}
-                    `}>
-                      {step.name}
-                    </div>
-                    <span className="text-xs text-gray-500 mt-1 capitalize">
-                      {step.role.replace('_', ' ')} • {step.action.replace('_', ' ')}
-                    </span>
+        ) : (
+          workflows.map((workflow) => (
+            <div 
+              key={workflow._id} 
+              className={`card ${workflow.isActive ? 'border-2 border-green-500' : 'border border-gray-200'}`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-gray-900">{workflow.name}</h3>
+                    {workflow.isActive ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                        <FiCheck className="h-4 w-4 mr-1" />
+                        Active (v{workflow.version})
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+                        Inactive (v{workflow.version})
+                      </span>
+                    )}
                   </div>
-                  {idx < arr.length - 1 && (
-                    <FiArrowRight className="h-5 w-5 text-gray-400 mx-2 flex-shrink-0" />
+                  {workflow.description && (
+                    <p className="text-gray-600 text-sm mt-1">{workflow.description}</p>
                   )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Created: {formatDate(workflow.createdAt)}
+                    {workflow.createdBy && ` by ${workflow.createdBy.name || workflow.createdBy.email}`}
+                  </p>
                 </div>
-              ))}
-            <FiArrowRight className="h-5 w-5 text-gray-400 mx-1 flex-shrink-0" />
-            <div className="px-4 py-2 rounded-lg text-sm font-medium bg-green-500 text-white whitespace-nowrap">
-              ✓ Active Contract
+              </div>
+
+              {/* Workflow Steps Visualization */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                <div className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 whitespace-nowrap">
+                  Contract Created
+                </div>
+                <FiArrowRight className="h-5 w-5 text-gray-400 mx-1 flex-shrink-0" />
+                
+                {workflow.steps
+                  .filter(s => s.isActive)
+                  .sort((a, b) => a.order - b.order)
+                  .map((step, idx, arr) => (
+                    <div key={idx} className="flex items-center">
+                      <div className="flex flex-col items-center">
+                        <div className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap
+                          ${step.role === 'legal' ? 'bg-blue-100 text-blue-700' : ''}
+                          ${step.role === 'finance' || step.role === 'senior_finance' ? 'bg-green-100 text-green-700' : ''}
+                          ${step.role === 'client' ? 'bg-purple-100 text-purple-700' : ''}
+                        `}>
+                          {step.name}
+                        </div>
+                        <span className="text-xs text-gray-500 mt-1 capitalize">
+                          {step.role.replace('_', ' ')} • {step.action.replace('_', ' ')}
+                        </span>
+                      </div>
+                      {idx < arr.length - 1 && (
+                        <FiArrowRight className="h-5 w-5 text-gray-400 mx-2 flex-shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                <FiArrowRight className="h-5 w-5 text-gray-400 mx-1 flex-shrink-0" />
+                <div className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+                  workflow.isActive ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
+                  {workflow.isActive ? '✓ Active Contract' : 'Contract Active'}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="card text-center py-12">
-          <FiSettings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No active workflow</h3>
-          <p className="text-gray-600 mt-1">Create your first workflow to define approval steps</p>
-          <button onClick={handleCreateNew} className="btn-primary mt-4">
-            Create Workflow
-          </button>
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
       {/* Version History Modal */}
       <Modal
@@ -468,7 +505,7 @@ const WorkflowSettings = () => {
                           value={step.role}
                           onChange={(e) => updateStep(index, 'role', e.target.value)}
                         >
-                          {roleOptions.map(opt => (
+                          {roles.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>

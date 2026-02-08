@@ -10,6 +10,7 @@ import { getPermissions, updatePermissions } from '../services/adminService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import RoleBadge from '../components/RoleBadge';
 import Toast from '../components/Toast';
+import { useAuth } from '../context/AuthContext';
 
 const permissionGroups = {
   'Contract Operations': [
@@ -21,7 +22,6 @@ const permissionGroups = {
     { key: 'canApproveContract', label: 'Approve Contracts', description: 'Can approve contracts in workflow' },
     { key: 'canRejectContract', label: 'Reject Contracts', description: 'Can reject contracts in workflow' },
     { key: 'canAmendContract', label: 'Amend Contracts', description: 'Can create amendments to rejected contracts' },
-    { key: 'canCancelContract', label: 'Cancel Contracts', description: 'Can cancel active contracts' },
   ],
   'Contract Visibility': [
     { key: 'canViewAllContracts', label: 'View All Contracts', description: 'Can view all contracts in the system' },
@@ -44,6 +44,7 @@ const permissionGroups = {
 };
 
 const RolePermissions = () => {
+  const { loading: authLoading, user } = useAuth();
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
@@ -51,8 +52,9 @@ const RolePermissions = () => {
   const [hasChanges, setHasChanges] = useState({});
 
   useEffect(() => {
+    if (authLoading || !user) return;
     fetchPermissions();
-  }, []);
+  }, [authLoading, user]);
 
   const fetchPermissions = async () => {
     try {
@@ -104,7 +106,7 @@ const RolePermissions = () => {
     return permissions.find(p => p.role === role)?.permissions || {};
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 

@@ -5,7 +5,6 @@ const StatusBadge = ({ status }) => {
     pending_client: 'text-blue-600',
     active: 'text-emerald-600',
     rejected: 'text-red-600',
-    cancelled: 'text-slate-400',
   };
 
   const labels = {
@@ -14,7 +13,6 @@ const StatusBadge = ({ status }) => {
     pending_client: 'Pending Client',
     active: 'Active',
     rejected: 'Rejected',
-    cancelled: 'Cancelled',
   };
 
   return (

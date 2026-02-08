@@ -8,7 +8,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['submission', 'approval', 'rejection', 'amendment', 'cancellation'],
+    enum: ['submission', 'approval', 'rejection', 'amendment'],
     required: true
   },
   title: {
@@ -22,7 +22,7 @@ const notificationSchema = new mongoose.Schema({
   contract: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Contract',
-    required: true
+    default: null
   },
   isRead: {
     type: Boolean,

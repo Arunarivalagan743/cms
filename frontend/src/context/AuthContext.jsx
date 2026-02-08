@@ -21,7 +21,6 @@ const defaultPermissions = {
   canApproveContract: false,
   canRejectContract: false,
   canAmendContract: false,
-  canCancelContract: false,
   canViewAllContracts: false,
   canViewOwnContracts: true,
   canManageUsers: false,
@@ -176,7 +175,7 @@ export const AuthProvider = ({ children }) => {
     // Role checks (kept for backward compatibility)
     isSuperAdmin: user?.role === 'super_admin',
     isLegal: user?.role === 'legal',
-    isFinance: user?.role === 'finance',
+    isFinance: user?.role === 'finance' || user?.role === 'senior_finance',
     isClient: user?.role === 'client',
     // Permission system
     permissions,

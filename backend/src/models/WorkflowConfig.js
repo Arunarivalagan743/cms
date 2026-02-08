@@ -11,12 +11,13 @@ const workflowStepSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['legal', 'finance', 'senior_finance', 'client', 'super_admin'],
     required: true,
+    lowercase: true,
+    trim: true,
   },
   action: {
     type: String,
-    enum: ['submit', 'approve', 'final_approve'],
+    enum: ['submit', 'approve', 'review', 'final_approve'],
     default: 'approve',
   },
   canSkip: {

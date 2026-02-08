@@ -18,6 +18,9 @@ import {
   FiMessageSquare,
   FiInfo,
   FiSlash,
+  FiX,
+  FiArrowRight,
+  FiEye,
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -27,21 +30,21 @@ import {
   submitContract,
   approveContract,
   rejectContract,
-  createAmendment,
-  cancelContract,
   updateContract,
   sendRemarksToClient,
+  createAmendment,
 } from '../services/contractService';
 import { formatDate, formatCurrency, formatTimeAgo } from '../utils/helpers';
 import LoadingSpinner from '../components/LoadingSpinner';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import Button from '../components/ui/Button';
 import Toast from '../components/Toast';
 
 const ContractDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isSuperAdmin, isLegal, isFinance, isClient, hasPermission } = useAuth();
+  const { user, isSuperAdmin, isLegal, isFinance, isClient, hasPermission, loading: authLoading } = useAuth();
   
   const [contract, setContract] = useState(null);
   const [versions, setVersions] = useState([]);
@@ -53,6 +56,8 @@ const ContractDetails = () => {
   
   // Filter states for versions and audit
   const [versionFilter, setVersionFilter] = useState('all');
+  const [versionRangeFilter, setVersionRangeFilter] = useState('all');
+  const [createdByFilter, setCreatedByFilter] = useState('all');
   const [auditFilter, setAuditFilter] = useState('all');
   
   // Toast helper
@@ -62,10 +67,10 @@ const ContractDetails = () => {
   
   // Modal states
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [showAmendModal, setShowAmendModal] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAmendModal, setShowAmendModal] = useState(false);
   const [showSendToClientModal, setShowSendToClientModal] = useState(false);
+  const [selectedVersionForAmendment, setSelectedVersionForAmendment] = useState(null);
   
   // Form states
   const [rejectRemarks, setRejectRemarks] = useState('');
@@ -73,12 +78,6 @@ const ContractDetails = () => {
   const [financeRemarkClient, setFinanceRemarkClient] = useState('');
   const [sendClientRemark, setSendClientRemark] = useState(false); // Checkbox for Finance to send client remark
   const [legalClientRemark, setLegalClientRemark] = useState(''); // Legal's message to client
-  const [cancelReason, setCancelReason] = useState('');
-  const [amendmentData, setAmendmentData] = useState({
-    contractName: '',
-    amount: '',
-    effectiveDate: '',
-  });
   const [editData, setEditData] = useState({
     contractName: '',
     amount: '',
@@ -89,12 +88,13 @@ const ContractDetails = () => {
   const isValidObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(id);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     if (id && isValidObjectId(id)) {
       fetchContractData();
     } else {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, authLoading, user]);
 
   const fetchContractData = async () => {
     try {
@@ -105,8 +105,8 @@ const ContractDetails = () => {
         return;
       }
 
-      // Get the current version from versions array
-      const currentVersion = contractData.versions?.[0] || {};
+      // Get the current version from versions array - explicitly find isCurrent: true
+      const currentVersion = contractData.versions?.find(v => v.isCurrent) || contractData.versions?.[0] || {};
       
       // Merge contract with current version for easy access
       const mergedContract = {
@@ -133,13 +133,6 @@ const ContractDetails = () => {
       setContract(mergedContract);
       setVersions(contractData.versions || []);
       
-      // Set amendment data from current values
-      setAmendmentData({
-        contractName: currentVersion.contractName || '',
-        amount: currentVersion.amount || '',
-        effectiveDate: currentVersion.effectiveDate?.split('T')[0] || '',
-      });
-      
       // Set edit data
       setEditData({
         contractName: currentVersion.contractName || '',
@@ -147,14 +140,12 @@ const ContractDetails = () => {
         effectiveDate: currentVersion.effectiveDate?.split('T')[0] || '',
       });
 
-      // Fetch audit logs for super admin
-      if (isSuperAdmin) {
-        try {
-          const logs = await getContractAudit(id);
-          setAuditLogs(logs);
-        } catch (error) {
-          // No audit logs available
-        }
+      // Fetch audit logs for all logged-in users (clients can see their own contract audit logs)
+      try {
+        const logs = await getContractAudit(id);
+        setAuditLogs(logs);
+      } catch (error) {
+        // No audit logs available or not authorized
       }
     } catch (error) {
       showToast('Failed to load contract', 'error');
@@ -415,39 +406,6 @@ const ContractDetails = () => {
     }
   };
 
-  const handleAmendment = async () => {
-    setActionLoading(true);
-    try {
-      await createAmendment(id, {
-        contractName: amendmentData.contractName,
-        amount: parseFloat(amendmentData.amount),
-        effectiveDate: amendmentData.effectiveDate,
-      });
-      showToast('Amendment created successfully', 'success');
-      setShowAmendModal(false);
-      await fetchContractData();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to create amendment', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    setActionLoading(true);
-    try {
-      await cancelContract(id, cancelReason);
-      showToast('Contract cancelled', 'success');
-      setShowCancelModal(false);
-      setCancelReason('');
-      await fetchContractData();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to cancel contract', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleEdit = async () => {
     setActionLoading(true);
     try {
@@ -461,6 +419,24 @@ const ContractDetails = () => {
       await fetchContractData();
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to update contract', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAmend = async () => {
+    setActionLoading(true);
+    try {
+      await createAmendment(id, {
+        contractName: editData.contractName,
+        amount: parseFloat(editData.amount),
+        effectiveDate: editData.effectiveDate,
+      });
+      showToast('Amendment created successfully. You can now edit and resubmit.', 'success');
+      setShowAmendModal(false);
+      await fetchContractData();
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to create amendment', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -487,27 +463,30 @@ const ContractDetails = () => {
   };
 
   // Permission checks - now using actual permissions from database
-  const canEdit = hasPermission('canEditDraft') && (contract?.status === 'draft') ||
-    hasPermission('canEditSubmitted') && (contract?.status === 'rejected');
+  const canEdit = hasPermission('canEditDraft') && (contract?.status === 'draft');
+  // Legal can create amendments on rejected contracts (amendment creates a new draft)
+  const canAmend = (hasPermission('canEditDraft') || hasPermission('canEditSubmitted')) && (contract?.status === 'rejected');
   const canSubmit = hasPermission('canSubmitContract') && contract?.status === 'draft';
   
-  // Super Admin can approve/reject any contract in pending_finance or pending_client status
+  // Helper to check if client matches user
+  const isClientMatch = contract?.client && user && (
+    contract.client._id?.toString() === user.id?.toString() ||
+    contract.client._id?.toString() === user._id?.toString() ||
+    contract.client.toString() === user.id?.toString() ||
+    contract.client.toString() === user._id?.toString()
+  );
+  
+  // Only Finance and Client can approve/reject (Super Admin cannot)
   const canApprove = hasPermission('canApproveContract') && (
-    (isSuperAdmin && ['pending_finance', 'pending_client'].includes(contract?.status)) ||
     (isFinance && contract?.status === 'pending_finance') ||
-    (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id)
+    (isClient && contract?.status === 'pending_client' && isClientMatch)
   );
   const canReject = hasPermission('canRejectContract') && (
-    (isSuperAdmin && ['pending_finance', 'pending_client'].includes(contract?.status)) ||
     (isFinance && contract?.status === 'pending_finance') ||
-    (isClient && contract?.status === 'pending_client' && contract?.client?._id === user?.id)
+    (isClient && contract?.status === 'pending_client' && isClientMatch)
   );
-  const canAmend = hasPermission('canAmendContract') && contract?.status === 'rejected' && 
-    contract?.createdBy?._id === user?.id;
-  const canCancel = hasPermission('canCancelContract') && 
-    ['pending_client', 'rejected'].includes(contract?.status);
 
-  if (loading) {
+  if (authLoading || loading) {
     return <LoadingSpinner size="lg" className="py-12" />;
   }
 
@@ -563,90 +542,99 @@ const ContractDetails = () => {
       </div>
 
       {/* Action Buttons */}
-      {(canEdit || canSubmit || canApprove || canReject || canAmend || canCancel) && (
+      {(canEdit || canAmend || canSubmit || canApprove || canReject) && (
         <div className="card">
           <div className="flex flex-wrap gap-3">
             {canEdit && contract.status === 'draft' && (
-              <button 
+              <Button
+                variant="secondary"
                 onClick={() => setShowEditModal(true)}
-                className="btn-secondary flex items-center gap-2"
+                iconLeading={<FiEdit />}
               >
-                <FiEdit className="h-5 w-5" />
                 Edit Contract
-              </button>
+              </Button>
+            )}
+            {canAmend && contract.status === 'rejected' && (
+              <Button
+                variant="success"
+                onClick={() => {
+                  // Pre-select current version for amendment
+                  const currentVer = versions[0] || contract.currentVersionData;
+                  setSelectedVersionForAmendment(currentVer);
+                  setEditData({
+                    contractName: currentVer.contractName || contract.contractName,
+                    amount: currentVer.amount || contract.amount,
+                    effectiveDate: (currentVer.effectiveDate || contract.effectiveDate)?.split('T')[0] || '',
+                  });
+                  setShowAmendModal(true);
+                }}
+                iconLeading={<FiRefreshCw />}
+              >
+                Create Amendment
+              </Button>
             )}
             {canSubmit && (
-              <button
+              <Button
                 onClick={handleSubmit}
                 disabled={actionLoading}
-                className="btn-primary flex items-center gap-2"
+                iconLeading={<FiSend />}
               >
-                <FiSend className="h-5 w-5" />
                 Submit for Review
-              </button>
+              </Button>
             )}
             {canApprove && (
-              <button
+              <Button
+                variant="primary"
                 onClick={handleApprove}
                 disabled={actionLoading}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                iconLeading={<FiCheckCircle />}
               >
-                <FiCheckCircle className="h-5 w-5" />
                 Approve
-              </button>
+              </Button>
             )}
             {canReject && (
-              <button
+              <Button
+                variant="destructive"
                 onClick={() => setShowRejectModal(true)}
                 disabled={actionLoading}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                iconLeading={<FiXCircle />}
               >
-                <FiXCircle className="h-5 w-5" />
                 Reject
-              </button>
-            )}
-            {canAmend && (
-              <button
-                onClick={() => setShowAmendModal(true)}
-                disabled={actionLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-              >
-                <FiRefreshCw className="h-5 w-5" />
-                Create Amendment
-              </button>
-            )}
-            {canCancel && (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                disabled={actionLoading}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-              >
-                <FiTrash2 className="h-5 w-5" />
-                Cancel Contract
-              </button>
+              </Button>
             )}
           </div>
         </div>
       )}
 
       {/* Rejection Remarks Alert */}
-      {contract.status === 'rejected' && visibleRemarks && visibleRemarks.length > 0 && (
+      {contract.status === 'rejected' && (
         <div className="card">
           <div className="flex items-start gap-3">
             <FiAlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
             <div className="flex-1">
               <h4 className="font-semibold text-slate-800">Contract Rejected</h4>
-              {visibleRemarks.map((item, index) => (
-                <div key={index} className="mt-2">
-                  <p className="text-sm font-medium text-slate-600">{item.type}:</p>
-                  <p className="text-sm text-red-600 mt-1">{item.remark}</p>
-                  {item.rejectedBy && (
+              {visibleRemarks && visibleRemarks.length > 0 ? (
+                visibleRemarks.map((item, index) => (
+                  <div key={index} className="mt-2">
+                    <p className="text-sm font-medium text-slate-600">{item.type}:</p>
+                    <p className="text-sm text-red-600 mt-1">{item.remark}</p>
+                    {item.rejectedBy && (
+                      <p className="text-xs text-slate-500 mt-1">
+                        By: {item.rejectedBy.name} • {item.rejectedAt && formatTimeAgo(item.rejectedAt)}
+                      </p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="mt-2">
+                  <p className="text-sm text-slate-500 italic">No remarks</p>
+                  {contract.rejectedBy && (
                     <p className="text-xs text-slate-500 mt-1">
-                      By: {item.rejectedBy.name} • {item.rejectedAt && formatTimeAgo(item.rejectedAt)}
+                      By: {contract.rejectedBy.name} • {contract.rejectedAt && formatTimeAgo(contract.rejectedAt)}
                     </p>
                   )}
                 </div>
-              ))}
+              )}
               
               {/* Legal can send remarks to client if Finance rejected but didn't send to client */}
               {(isLegal || isSuperAdmin) && 
@@ -661,29 +649,17 @@ const ContractDetails = () => {
                         Finance did not send a message to the client. You can send a message now.
                       </p>
                     </div>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setShowSendToClientModal(true)}
-                      className="btn-secondary text-sm flex items-center gap-2"
+                      iconLeading={<FiSend />}
                     >
-                      <FiSend className="h-4 w-4" />
                       Send to Client
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cancelled Status Alert */}
-      {contract.status === 'cancelled' && (
-        <div className="card">
-          <div className="flex items-start gap-3">
-            <FiTrash2 className="h-5 w-5 text-slate-500 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-gray-900">Contract Cancelled</h4>
-              <p className="text-sm text-gray-700 mt-1">This contract has been cancelled and cannot be edited.</p>
             </div>
           </div>
         </div>
@@ -733,8 +709,8 @@ const ContractDetails = () => {
             </div>
           )}
 
-          {/* Previous Rejection History */}
-          {getPreviousRejectionHistory().length > 0 && (
+          {/* Previous Rejection History - Hidden from Client */}
+          {!isClient && getPreviousRejectionHistory().length > 0 && (
             <div className="card">
               <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FiAlertCircle className="h-5 w-5 text-amber-600" />
@@ -789,18 +765,16 @@ const ContractDetails = () => {
           >
             Versions ({versions.length})
           </button>
-          {isSuperAdmin && (
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'audit'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Audit Logs
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab('audit')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'audit'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Audit Trail
+          </button>
         </nav>
       </div>
 
@@ -821,6 +795,28 @@ const ContractDetails = () => {
               <label className="block text-sm font-medium text-gray-600 mb-1">Contract Number</label>
               <p className="text-base text-gray-900">{contract.contractNumber}</p>
             </div>
+
+            {/* Workflow - Hidden from Clients */}
+            {!isClient && (
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  <FiArrowRight className="inline h-4 w-4 mr-1" />
+                  Workflow
+                </label>
+                <span className={`inline-block px-3 py-1.5 rounded-md text-sm font-medium ${
+                  contract.workflow?.name?.includes('Direct Client') 
+                    ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                    : 'bg-blue-100 text-blue-800 border border-blue-300'
+                }`}>
+                  {contract.workflow?.name || 'N/A'}
+                </span>
+                {contract.workflow?.steps && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {contract.workflow.steps.map(s => s.role).join(' → ')}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -904,154 +900,509 @@ const ContractDetails = () => {
 
       {activeTab === 'versions' && (
         <div className="card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Version History</h3>
-            <div className="flex items-center gap-2">
-              <FiFilter className="h-4 w-4 text-slate-400" />
-              <select
-                className="input-field text-sm py-1.5"
-                value={versionFilter}
-                onChange={(e) => setVersionFilter(e.target.value)}
-              >
-                <option value="all">All Versions</option>
-                <option value="current">Current Only</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="rejected">Rejected</option>
-                <option value="amended">Amended</option>
-              </select>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Version History</h3>
+                <p className="text-sm text-gray-500">Complete timeline of contract changes and approvals</p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <FiFileText className="h-4 w-4" />
+                <span className="font-medium">
+                  {(() => {
+                    const filteredCount = versions.filter(v => {
+                      // First apply client visibility rules
+                      if (isClient) {
+                        if (v.isCurrent) {
+                          // Current version always counted for clients
+                        } else if (v.status === 'draft' || v.status === 'pending_finance' || v.status === 'rejected') {
+                          return false;
+                        } else if (!v.approvedByFinance && v.status !== 'pending_client' && v.status !== 'active') {
+                          return false;
+                        }
+                      }
+                      
+                      // Apply status filter
+                      let statusMatch = true;
+                      if (versionFilter === 'all') statusMatch = true;
+                      else if (versionFilter === 'current') statusMatch = v.isCurrent;
+                      else if (versionFilter === 'amended') statusMatch = v.versionNumber > 1;
+                      else if (versionFilter === 'pending') statusMatch = v.status.includes('pending');
+                      else if (versionFilter === 'approved') statusMatch = v.status === 'active';
+                      else if (versionFilter === 'draft') statusMatch = v.status === 'draft';
+                      else if (versionFilter === 'finance_approved') statusMatch = v.approvedByFinance;
+                      else if (versionFilter === 'client_approved') statusMatch = v.approvedByClient;
+                      else if (versionFilter === 'finance_pending') statusMatch = v.status === 'pending_finance';
+                      else if (versionFilter === 'client_pending') statusMatch = v.status === 'pending_client';
+                      else statusMatch = v.status === versionFilter;
+                      
+                      // Apply version range filter
+                      let rangeMatch = true;
+                      if (versionRangeFilter === 'latest-3') {
+                        const maxVersion = Math.max(...versions.map(v => v.versionNumber));
+                        rangeMatch = v.versionNumber > maxVersion - 3;
+                      } else if (versionRangeFilter === 'latest-5') {
+                        const maxVersion = Math.max(...versions.map(v => v.versionNumber));
+                        rangeMatch = v.versionNumber > maxVersion - 5;
+                      } else if (versionRangeFilter === 'v1') {
+                        rangeMatch = v.versionNumber === 1;
+                      }
+                      
+                      // Apply created by filter
+                      let createdByMatch = true;
+                      if (createdByFilter !== 'all') {
+                        createdByMatch = v.createdBy?.name === createdByFilter;
+                      }
+                      
+                      return statusMatch && rangeMatch && createdByMatch;
+                    }).length;
+                    
+                    const hasFilters = versionFilter !== 'all' || versionRangeFilter !== 'all' || createdByFilter !== 'all';
+                    
+                    return `${filteredCount} ${hasFilters ? 'Filtered' : 'Total'} Version${filteredCount !== 1 ? 's' : ''}`;
+                  })()}
+                </span>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    <FiFilter className="h-3 w-3 inline mr-1" />
+                    Status
+                  </label>
+                  <select
+                    className="input-field text-sm w-full"
+                    value={versionFilter}
+                    onChange={(e) => setVersionFilter(e.target.value)}
+                  >
+                    <optgroup label="General">
+                      <option value="all">All Versions</option>
+                      <option value="current">Current Only</option>
+                      <option value="amended">Amended Versions</option>
+                    </optgroup>
+                    <optgroup label="Contract Status">
+                      <option value="draft">Draft</option>
+                      <option value="approved">Approved (Active)</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="pending">All Pending</option>
+                    </optgroup>
+                    <optgroup label="Workflow Stage">
+                      <option value="finance_pending">Pending Finance Review</option>
+                      <option value="client_pending">Pending Client Review</option>
+                      <option value="finance_approved">Finance Approved</option>
+                      <option value="client_approved">Client Approved</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Version Range Filter */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Version Range
+                  </label>
+                  <select 
+                    className="input-field text-sm w-full"
+                    value={versionRangeFilter}
+                    onChange={(e) => setVersionRangeFilter(e.target.value)}
+                  >
+                    <option value="all">All Versions</option>
+                    <option value="latest-3">Latest 3</option>
+                    <option value="latest-5">Latest 5</option>
+                    <option value="v1">Version 1 Only</option>
+                  </select>
+                </div>
+
+                {/* Created By Filter */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Created By
+                  </label>
+                  <select 
+                    className="input-field text-sm w-full"
+                    value={createdByFilter}
+                    onChange={(e) => setCreatedByFilter(e.target.value)}
+                  >
+                    <option value="all">All Users</option>
+                    {[...new Set(versions.map(v => v.createdBy?.name).filter(Boolean))].map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setVersionFilter('all');
+                      setVersionRangeFilter('all');
+                      setCreatedByFilter('all');
+                    }}
+                    iconLeading={<FiX />}
+                    className="flex-1"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="space-y-4">
-            {versions
-              .filter(v => {
-                if (versionFilter === 'all') return true;
-                if (versionFilter === 'current') return v.isCurrent;
-                if (versionFilter === 'amended') return v.versionNumber > 1;
-                if (versionFilter === 'pending') return v.status.includes('pending');
-                return v.status === versionFilter;
-              })
-              .map((version, index) => {
-              // Get previous version for comparison
-              const prevVersion = versions.find(v => v.versionNumber === version.versionNumber - 1);
-              const versionChanges = prevVersion ? [] : null;
-              
-              if (prevVersion) {
-                if (version.contractName !== prevVersion.contractName) {
-                  versionChanges.push({ field: 'Name', before: prevVersion.contractName, after: version.contractName });
-                }
-                if (version.amount !== prevVersion.amount) {
-                  versionChanges.push({ field: 'Amount', before: formatCurrency(prevVersion.amount), after: formatCurrency(version.amount) });
-                }
-                if (formatDate(version.effectiveDate) !== formatDate(prevVersion.effectiveDate)) {
-                  versionChanges.push({ field: 'Date', before: formatDate(prevVersion.effectiveDate), after: formatDate(version.effectiveDate) });
-                }
-              }
-              
-              return (
-                <div
-                  key={version._id}
-                  className={`p-4 rounded-lg border ${
-                    version.isCurrent ? 'border-primary-300 bg-primary-50' : 'border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-gray-900">
-                        Version {version.versionNumber}
-                      </span>
-                      {version.isCurrent && (
-                        <span className="text-xs font-medium text-primary-600">
-                          Current
-                        </span>
-                      )}
-                      {version.versionNumber > 1 && (
-                        <span className="flex items-center gap-1 text-xs font-medium text-blue-600">
-                          <FiRefreshCw className="h-3 w-3" />
-                          Amended
-                        </span>
-                      )}
-                      <StatusBadge status={version.status} />
-                    </div>
-                    <span className="text-sm text-gray-500">{formatDate(version.createdAt)}</span>
-                  </div>
-                  
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Name:</span>
-                      <span className="ml-2 text-gray-900">{version.contractName}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Amount:</span>
-                      <span className="ml-2 text-gray-900">{formatCurrency(version.amount)}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Effective Date:</span>
-                      <span className="ml-2 text-gray-900">{formatDate(version.effectiveDate)}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Created By:</span>
-                      <span className="ml-2 text-gray-900">{version.createdBy?.name || 'N/A'}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Show changes compared to previous version - Only for Legal/Finance/Admin */}
-                  {!isClient && versionChanges && versionChanges.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="flex items-center gap-1 text-xs font-medium text-green-700 mb-2">
-                        <FiCheckCircle className="h-3 w-3" />
-                        Changes from v{version.versionNumber - 1}:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {versionChanges.map((change, cIdx) => (
-                          <span key={cIdx} className="text-xs text-slate-700">
-                            {change.field}: <span className="line-through text-red-500">{change.before}</span> → <span className="font-medium text-green-600">{change.after}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+
+          <div className="overflow-x-auto shadow-sm border border-slate-200 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Version</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status & Stage</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Contract Details</th>
+                  {!isClient && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Changes Made</th>
                   )}
-                  
-                  {/* Show rejection remarks for this version */}
-                  {version.status === 'rejected' && (version.rejectionRemarks || version.financeRemarkInternal || version.financeRemarkClient || version.clientRemark) && (
-                    <div className="mt-3 pt-3 border-t border-red-200">
-                      <p className="flex items-center gap-1 text-xs font-medium text-red-600 mb-1">
-                        <FiXCircle className="h-3 w-3" />
-                        Rejected by {version.rejectedBy?.role === 'finance' ? 'Finance Team' : 'Client'}
-                      </p>
-                      <p className="text-sm text-red-600">
-                        {isClient 
-                          ? (version.financeRemarkClient || version.clientRemark || 'Contract requires revision')
-                          : (version.financeRemarkInternal || version.clientRemark || version.rejectionRemarks)
-                        }
-                      </p>
-                      {/* Show indicator to client that there may be more details with Legal */}
-                      {isClient && version.rejectedBy?.role === 'finance' && version.financeRemarkInternal && (
-                        <p className="flex items-center gap-1 text-xs text-slate-500 mt-2 italic">
-                          <FiInfo className="h-3 w-3" />
-                          Additional details have been shared with the Legal team
-                        </p>
-                      )}
-                      {version.rejectedBy && (
-                        <p className="text-xs text-red-500 mt-1">
-                          By: {version.rejectedBy.name} • {version.rejectedAt && formatTimeAgo(version.rejectedAt)}
-                        </p>
-                      )}
-                    </div>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Created By</th>
+                  {/* Hide Finance Review column if Direct Client Workflow */}
+                  {!(contract.workflow?.name?.includes('Direct Client')) && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Finance Review</th>
                   )}
-                </div>
-              );
-            })}
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Client Review</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Remarks & Notes</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {versions
+                  .filter(v => {
+                    // Client visibility rules:
+                    // - Always show CURRENT version (even if rejected/draft) so they know current status
+                    // - Show versions that passed finance approval (pending_client, active)
+                    // - Hide draft/pending_finance versions that are NOT current
+                    if (isClient) {
+                      // Always show current version regardless of status
+                      if (v.isCurrent) {
+                        return true;
+                      }
+                      // For non-current versions, only show if they reached client stage
+                      if (v.status === 'draft' || v.status === 'pending_finance' || v.status === 'rejected') {
+                        return false;
+                      }
+                      // Show if approved by finance (pending_client, active)
+                      if (!v.approvedByFinance && v.status !== 'pending_client' && v.status !== 'active') {
+                        return false;
+                      }
+                    }
+                    
+                    // Apply status filter
+                    let statusMatch = true;
+                    if (versionFilter === 'all') statusMatch = true;
+                    else if (versionFilter === 'current') statusMatch = v.isCurrent;
+                    else if (versionFilter === 'amended') statusMatch = v.versionNumber > 1;
+                    else if (versionFilter === 'pending') statusMatch = v.status.includes('pending');
+                    else if (versionFilter === 'approved') statusMatch = v.status === 'active';
+                    else if (versionFilter === 'draft') statusMatch = v.status === 'draft';
+                    else if (versionFilter === 'finance_approved') statusMatch = v.approvedByFinance;
+                    else if (versionFilter === 'client_approved') statusMatch = v.approvedByClient;
+                    else if (versionFilter === 'finance_pending') statusMatch = v.status === 'pending_finance';
+                    else if (versionFilter === 'client_pending') statusMatch = v.status === 'pending_client';
+                    else statusMatch = v.status === versionFilter;
+                    
+                    // Apply version range filter
+                    let rangeMatch = true;
+                    if (versionRangeFilter === 'latest-3') {
+                      const maxVersion = Math.max(...versions.map(v => v.versionNumber));
+                      rangeMatch = v.versionNumber > maxVersion - 3;
+                    } else if (versionRangeFilter === 'latest-5') {
+                      const maxVersion = Math.max(...versions.map(v => v.versionNumber));
+                      rangeMatch = v.versionNumber > maxVersion - 5;
+                    } else if (versionRangeFilter === 'v1') {
+                      rangeMatch = v.versionNumber === 1;
+                    }
+                    
+                    // Apply created by filter
+                    let createdByMatch = true;
+                    if (createdByFilter !== 'all') {
+                      createdByMatch = v.createdBy?.name === createdByFilter;
+                    }
+                    
+                    return statusMatch && rangeMatch && createdByMatch;
+                  })
+                  .map((version, index) => {
+                    const prevVersion = versions.find(v => v.versionNumber === version.versionNumber - 1);
+                    const changes = [];
+                    
+                    if (prevVersion) {
+                      if (version.contractName !== prevVersion.contractName) {
+                        changes.push({ field: 'Contract Name', before: prevVersion.contractName, after: version.contractName });
+                      }
+                      if (version.amount !== prevVersion.amount) {
+                        changes.push({ field: 'Amount', before: formatCurrency(prevVersion.amount), after: formatCurrency(version.amount) });
+                      }
+                      if (formatDate(version.effectiveDate) !== formatDate(prevVersion.effectiveDate)) {
+                        changes.push({ field: 'Effective Date', before: formatDate(prevVersion.effectiveDate), after: formatDate(version.effectiveDate) });
+                      }
+                    }
+                    
+                    return (
+                      <tr key={version._id} className={`hover:bg-slate-50 transition-colors ${version.isCurrent ? 'bg-primary-50' : ''}`}>
+                        {/* Version Number */}
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-slate-800">v{version.versionNumber}</span>
+                            {version.isCurrent && (
+                              <span className="px-2 py-0.5 bg-primary-600 text-white text-xs font-medium rounded-full">
+                                CURRENT
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">{formatDate(version.createdAt)}</div>
+                        </td>
+
+                        {/* Status & Workflow Stage */}
+                        <td className="px-4 py-4">
+                          <StatusBadge status={version.status} />
+                          <div className={`mt-2 text-xs font-medium ${
+                            version.status === 'draft' ? 'text-slate-600' :
+                            version.status === 'pending_finance' ? 'text-amber-700' :
+                            version.status === 'pending_client' ? 'text-blue-700' :
+                            version.status === 'active' ? 'text-emerald-700' :
+                            version.status === 'rejected' ? 'text-red-700' :
+                            'text-gray-600'
+                          }`}>
+                            {version.status === 'draft' ? 'Draft Created' :
+                             version.status === 'pending_finance' ? 'Awaiting Finance' :
+                             version.status === 'pending_client' ? 'Awaiting Client' :
+                             version.status === 'active' ? 'Fully Approved' :
+                             version.status === 'rejected' ? 'Rejected' :
+                             version.status}
+                          </div>
+                        </td>
+
+                        {/* Contract Details */}
+                        <td className="px-4 py-4">
+                          <div className="text-sm space-y-1">
+                            <div>
+                              <span className="text-slate-500 text-xs">Name:</span>
+                              <div className="font-medium text-slate-800">{version.contractName}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 text-xs">Amount:</span>
+                              <div className="font-semibold text-emerald-700">{formatCurrency(version.amount)}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 text-xs">Effective:</span>
+                              <div className="text-slate-700">{formatDate(version.effectiveDate)}</div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Changes Made - Hidden from Clients */}
+                        {!isClient && (
+                          <td className="px-4 py-4">
+                            {changes.length > 0 ? (
+                              <div className="space-y-2">
+                                {changes.map((change, idx) => (
+                                  <div key={idx} className="text-xs">
+                                    <div className="font-medium text-slate-700">{change.field}:</div>
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                      <span className="text-red-600 line-through">{change.before}</span>
+                                      <FiArrowRight className="h-3 w-3 text-slate-400" />
+                                      <span className="text-emerald-600 font-medium">{change.after}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : version.versionNumber === 1 ? (
+                              <span className="text-xs text-slate-500 italic">Initial version</span>
+                            ) : (
+                              <span className="text-xs text-slate-400">No changes</span>
+                            )}
+                          </td>
+                        )}
+
+                        {/* Created By (Legal/Admin) */}
+                        <td className="px-4 py-4">
+                          <div className="text-sm font-medium text-slate-800">{version.createdBy?.name || 'N/A'}</div>
+                          <div className="text-xs text-slate-500 capitalize">{version.createdBy?.role || 'Legal'}</div>
+                          <div className="text-xs text-slate-500 mt-1">{formatDate(version.createdAt)}</div>
+                        </td>
+
+                        {/* Finance Review */}
+                        {!(contract.workflow?.name?.includes('Direct Client')) && (
+                          <td className="px-4 py-4">
+                            {version.approvedByFinance ? (
+                              <div>
+                                <div className="flex items-center gap-1 text-emerald-700 font-medium text-sm mb-2">
+                                  <FiCheckCircle className="h-4 w-4" />
+                                  Approved
+                                </div>
+                                <div className="text-xs font-medium text-slate-700">{version.approvedByFinance.name}</div>
+                                <div className="text-xs text-slate-500">{formatDate(version.financeApprovedAt)}</div>
+                              </div>
+                            ) : version.rejectedBy?.role === 'finance' ? (
+                              <div>
+                                <div className="flex items-center gap-1 text-red-700 font-medium text-sm mb-2">
+                                  <FiXCircle className="h-4 w-4" />
+                                  Rejected
+                                </div>
+                                <div className="text-xs font-medium text-slate-700">{version.rejectedBy.name}</div>
+                                <div className="text-xs text-slate-500">{formatDate(version.rejectedAt)}</div>
+                              </div>
+                            ) : version.status === 'pending_finance' ? (
+                              <div className="flex items-center gap-1 text-amber-600 text-sm">
+                                <FiClock className="h-4 w-4" />
+                                <span className="font-medium">Pending</span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400">N/A</span>
+                            )}
+                          </td>
+                        )}
+
+                        {/* Client Review */}
+                        <td className="px-4 py-4">
+                          {version.approvedByClient ? (
+                            <div>
+                              <div className="flex items-center gap-1 text-emerald-700 font-medium text-sm mb-2">
+                                <FiCheckCircle className="h-4 w-4" />
+                                Approved
+                              </div>
+                              <div className="text-xs font-medium text-slate-700">{version.approvedByClient.name}</div>
+                              <div className="text-xs text-slate-500">{formatDate(version.clientApprovedAt)}</div>
+                            </div>
+                          ) : version.rejectedBy?.role === 'client' ? (
+                            <div>
+                              <div className="flex items-center gap-1 text-red-700 font-medium text-sm mb-2">
+                                <FiXCircle className="h-4 w-4" />
+                                Rejected
+                              </div>
+                              <div className="text-xs font-medium text-slate-700">{version.rejectedBy.name}</div>
+                              <div className="text-xs text-slate-500">{formatDate(version.rejectedAt)}</div>
+                            </div>
+                          ) : version.status === 'pending_client' ? (
+                            <div className="flex items-center gap-1 text-blue-600 text-sm">
+                              <FiClock className="h-4 w-4" />
+                              <span className="font-medium">Pending</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">N/A</span>
+                          )}
+                        </td>
+
+                        {/* Remarks & Notes */}
+                        <td className="px-4 py-4">
+                          <div className="max-w-xs space-y-2">
+                            {!isClient && version.financeRemarkInternal && (
+                              <div className="text-xs p-2 bg-amber-50 border border-amber-200 rounded">
+                                <div className="font-medium text-amber-800 mb-1">Finance (Internal):</div>
+                                <div className="text-amber-700">{version.financeRemarkInternal}</div>
+                              </div>
+                            )}
+                            {version.financeRemarkClient && (
+                              <div className="text-xs p-2 bg-blue-50 border border-blue-200 rounded">
+                                <div className="font-medium text-blue-800 mb-1">{isClient ? 'Finance Review:' : 'Finance (Client-Facing):'}</div>
+                                <div className="text-blue-700">{version.financeRemarkClient}</div>
+                              </div>
+                            )}
+                            {version.clientRemark && (
+                              <div className="text-xs p-2 bg-purple-50 border border-purple-200 rounded">
+                                <div className="font-medium text-purple-800 mb-1">Client Remark:</div>
+                                <div className="text-purple-700">{version.clientRemark}</div>
+                              </div>
+                            )}
+                            {/* Show "No remarks" if client sees no remarks, or if non-client sees no remarks */}
+                            {(isClient ? (!version.financeRemarkClient && !version.clientRemark) : (!version.financeRemarkInternal && !version.financeRemarkClient && !version.clientRemark)) && (
+                              <span className="text-xs text-slate-400 italic">No remarks</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                {/* Empty State when no versions match filters */}
+                {(() => {
+                  const filteredVersions = versions.filter(v => {
+                    // Client visibility rules (same as above):
+                    if (isClient) {
+                      // Always show current version
+                      if (v.isCurrent) {
+                        return true;
+                      }
+                      // For non-current versions, hide if not client-visible statuses
+                      if (v.status === 'draft' || v.status === 'pending_finance' || v.status === 'rejected') {
+                        return false;
+                      }
+                      if (!v.approvedByFinance && v.status !== 'pending_client' && v.status !== 'active') {
+                        return false;
+                      }
+                    }
+                    
+                    let statusMatch = true;
+                    if (versionFilter === 'all') statusMatch = true;
+                    else if (versionFilter === 'current') statusMatch = v.isCurrent;
+                    else if (versionFilter === 'amended') statusMatch = v.versionNumber > 1;
+                    else if (versionFilter === 'pending') statusMatch = v.status.includes('pending');
+                    else if (versionFilter === 'approved') statusMatch = v.status === 'active';
+                    else if (versionFilter === 'draft') statusMatch = v.status === 'draft';
+                    else if (versionFilter === 'finance_approved') statusMatch = v.approvedByFinance;
+                    else if (versionFilter === 'client_approved') statusMatch = v.approvedByClient;
+                    else if (versionFilter === 'finance_pending') statusMatch = v.status === 'pending_finance';
+                    else if (versionFilter === 'client_pending') statusMatch = v.status === 'pending_client';
+                    else statusMatch = v.status === versionFilter;
+                    
+                    let rangeMatch = true;
+                    if (versionRangeFilter === 'latest-3') {
+                      const maxVersion = Math.max(...versions.map(v => v.versionNumber));
+                      rangeMatch = v.versionNumber > maxVersion - 3;
+                    } else if (versionRangeFilter === 'latest-5') {
+                      const maxVersion = Math.max(...versions.map(v => v.versionNumber));
+                      rangeMatch = v.versionNumber > maxVersion - 5;
+                    } else if (versionRangeFilter === 'v1') {
+                      rangeMatch = v.versionNumber === 1;
+                    }
+                    
+                    let createdByMatch = true;
+                    if (createdByFilter !== 'all') {
+                      createdByMatch = v.createdBy?.name === createdByFilter;
+                    }
+                    
+                    return statusMatch && rangeMatch && createdByMatch;
+                  });
+                  
+                  if (filteredVersions.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={isClient ? "7" : "8"} className="px-4 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center text-slate-400">
+                            <FiFilter className="h-12 w-12 mb-3 opacity-30" />
+                            <p className="text-sm font-medium text-slate-600">No versions match the selected filters</p>
+                            <p className="text-xs text-slate-500 mt-1">Try adjusting or clearing your filters</p>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return null;
+                })()}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {activeTab === 'audit' && isSuperAdmin && (
+      {activeTab === 'audit' && (
         <div className="card">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Audit Trail</h3>
-              <p className="text-sm text-gray-500">Complete immutable history of all contract actions</p>
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <FiFileText className="h-5 w-5 text-primary-600" />
+                Audit Trail - Complete Contract History
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                <span className="font-semibold text-amber-700">Immutable & Append-Only:</span> Complete audit log of all contract-related actions. 
+                Logs cannot be edited or deleted. All changes tracked by user, role, timestamp, and remarks.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <FiFilter className="h-4 w-4 text-slate-400" />
@@ -1061,68 +1412,251 @@ const ContractDetails = () => {
                 onChange={(e) => setAuditFilter(e.target.value)}
               >
                 <option value="all">All Actions</option>
-                <option value="created">Created</option>
-                <option value="updated">Updated</option>
-                <option value="submitted">Submitted</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="amended">Amended</option>
-                <option value="cancelled">Cancelled</option>
+                <optgroup label="Contract Lifecycle">
+                  <option value="contract_created">Created</option>
+                  <option value="contract_updated">Updated</option>
+                  <option value="contract_submitted">Submitted</option>
+                  <option value="contract_approved_finance">Finance Approved</option>
+                  <option value="contract_approved_client">Client Approved</option>
+                  <option value="contract_rejected_finance">Finance Rejected</option>
+                  <option value="contract_rejected_client">Client Rejected</option>
+                  <option value="contract_amended">Amended</option>
+                  <option value="contract_activated">Activated</option>
+                </optgroup>
+                <optgroup label="Activity">
+                  <option value="contract_viewed">Viewed</option>
+                  <option value="contract_forwarded_client">Forwarded to Client</option>
+                  <option value="finance_remarks_added">Finance Remarks</option>
+                  <option value="client_remarks_added">Client Remarks</option>
+                  <option value="status_changed">Status Changed</option>
+                </optgroup>
+                <optgroup label="Legacy">
+                  <option value="created">Created (Legacy)</option>
+                  <option value="updated">Updated (Legacy)</option>
+                  <option value="submitted">Submitted (Legacy)</option>
+                  <option value="approved">Approved (Legacy)</option>
+                  <option value="rejected">Rejected (Legacy)</option>
+                  <option value="amended">Amended (Legacy)</option>
+                </optgroup>
               </select>
             </div>
           </div>
           {auditLogs.filter(log => auditFilter === 'all' || log.action === auditFilter).length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {auditLogs
                 .filter(log => auditFilter === 'all' || log.action === auditFilter)
                 .map((log, index) => {
                 // Action-specific styling with React icons
                 const actionStyles = {
-                  created: { icon: FiFileText, color: 'text-blue-600' },
-                  updated: { icon: FiEdit, color: 'text-slate-600' },
-                  submitted: { icon: FiSend, color: 'text-indigo-600' },
-                  approved: { icon: FiCheckCircle, color: 'text-green-600' },
-                  rejected: { icon: FiXCircle, color: 'text-red-600' },
-                  amended: { icon: FiRefreshCw, color: 'text-amber-600' },
-                  cancelled: { icon: FiSlash, color: 'text-slate-500' },
+                  // New granular actions
+                  contract_created: { icon: FiFileText, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', label: 'Contract Created' },
+                  contract_updated: { icon: FiEdit, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', label: 'Contract Updated' },
+                  contract_submitted: { icon: FiSend, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Contract Submitted' },
+                  contract_approved_finance: { icon: FiCheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: 'Finance Approved' },
+                  contract_approved_client: { icon: FiCheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'Client Approved' },
+                  contract_rejected_finance: { icon: FiXCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: 'Finance Rejected' },
+                  contract_rejected_client: { icon: FiXCircle, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200', label: 'Client Rejected' },
+                  contract_amended: { icon: FiRefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', label: 'Contract Amended' },
+                  contract_activated: { icon: FiCheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: 'Contract Activated' },
+                  contract_viewed: { icon: FiEye, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200', label: 'Contract Viewed' },
+                  contract_viewed_client: { icon: FiEye, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200', label: 'Client Viewed' },
+                  contract_opened_review: { icon: FiEye, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200', label: 'Opened for Review' },
+                  contract_forwarded_client: { icon: FiSend, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Forwarded to Client' },
+                  finance_remarks_added: { icon: FiMessageSquare, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', label: 'Finance Remarks Added' },
+                  client_remarks_added: { icon: FiMessageSquare, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', label: 'Client Remarks Added' },
+                  status_changed: { icon: FiRefreshCw, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Status Changed' },
+                  version_incremented: { icon: FiRefreshCw, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200', label: 'Version Incremented' },
+                  sent_remarks_to_client: { icon: FiSend, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Remarks Sent to Client' },
+                  // Legacy actions
+                  created: { icon: FiFileText, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', label: 'Created' },
+                  updated: { icon: FiEdit, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', label: 'Updated' },
+                  submitted: { icon: FiSend, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Submitted' },
+                  approved: { icon: FiCheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: 'Approved' },
+                  rejected: { icon: FiXCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: 'Rejected' },
+                  amended: { icon: FiRefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', label: 'Amended' },
+                  viewed: { icon: FiEye, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200', label: 'Viewed' },
                 };
-                const style = actionStyles[log.action] || actionStyles.updated;
+                const style = actionStyles[log.action] || { icon: FiEdit, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', label: log.action };
                 const ActionIcon = style.icon;
                 
+                // Find the version details from versions array
+                const versionDetails = versions.find(v => v._id === log.contractVersion?._id);
+                
                 return (
-                  <div key={log._id} className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg">
-                    <div className="mt-0.5">
-                      <ActionIcon className={`h-5 w-5 ${style.color}`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
-                          <p className={`font-semibold capitalize ${style.color}`}>{log.action}</p>
-                          {log.contractVersion?.versionNumber && (
-                            <span className="text-xs text-slate-500">
-                              v{log.contractVersion.versionNumber}
-                            </span>
-                          )}
+                  <div key={log._id} className={`border ${style.border} rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
+                    {/* Header Section */}
+                    <div className={`${style.bg} px-5 py-4 border-b ${style.border}`}>
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 ${style.bg} border ${style.border} rounded-lg`}>
+                            <ActionIcon className={`h-5 w-5 ${style.color}`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className={`font-bold capitalize text-base ${style.color}`}>{style.label}</h4>
+                              {log.contractVersion?.versionNumber && (
+                                <span className="px-2 py-0.5 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-700">
+                                  Version {log.contractVersion.versionNumber}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                              <FiClock className="h-3 w-3" />
+                              <span className="font-medium">{formatDate(log.createdAt)}</span>
+                              <span>•</span>
+                              <span>{formatTimeAgo(log.createdAt)}</span>
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-xs text-gray-500">{formatDate(log.createdAt)} • {formatTimeAgo(log.createdAt)}</span>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 justify-end">
+                            <FiUser className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="font-semibold text-slate-800">{log.performedBy?.name || 'System'}</span>
+                          </div>
+                          <span className="text-xs text-slate-500 capitalize mt-0.5 inline-block">Role: {log.roleAtTime}</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        By: <span className="font-medium">{log.performedBy?.name || 'System'}</span>
-                        <span className="ml-2 text-xs text-slate-500 capitalize">({log.roleAtTime})</span>
-                      </p>
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="bg-white px-5 py-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Contract Information */}
+                        <div className="space-y-2">
+                          <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                            <FiFileText className="h-3 w-3" />
+                            Contract Information
+                          </h5>
+                          <div className="bg-slate-50 rounded p-3 space-y-1.5">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-600">Contract Number:</span>
+                              <span className="font-mono font-semibold text-slate-800">{contract.contractNumber}</span>
+                            </div>
+                            {versionDetails && (
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Contract Name:</span>
+                                  <span className="font-medium text-slate-800">{versionDetails.contractName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Amount:</span>
+                                  <span className="font-semibold text-emerald-700">{formatCurrency(versionDetails.amount)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Effective Date:</span>
+                                  <span className="font-medium text-slate-800">{formatDate(versionDetails.effectiveDate)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm items-center">
+                                  <span className="text-slate-600">Status:</span>
+                                  <StatusBadge status={versionDetails.status} />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Version & Metadata */}
+                        <div className="space-y-2">
+                          <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                            <FiInfo className="h-3 w-3" />
+                            Version & Metadata
+                          </h5>
+                          <div className="bg-slate-50 rounded p-3 space-y-1.5">
+                            {versionDetails && (
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Version Number:</span>
+                                  <span className="font-bold text-primary-700">V{versionDetails.versionNumber}</span>
+                                </div>
+                                {versionDetails.isCurrent && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-slate-600">Current Version:</span>
+                                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded">Yes</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-slate-600">Created By:</span>
+                                  <span className="font-medium text-slate-800">{versionDetails.createdBy?.name}</span>
+                                </div>
+                                {versionDetails.approvedByFinance && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-slate-600">Finance Approved:</span>
+                                    <span className="font-medium text-emerald-700">{versionDetails.approvedByFinance.name}</span>
+                                  </div>
+                                )}
+                                {versionDetails.approvedByClient && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-slate-600">Client Approved:</span>
+                                    <span className="font-medium text-emerald-700">{versionDetails.approvedByClient.name}</span>
+                                  </div>
+                                )}
+                                {versionDetails.rejectedBy && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-slate-600">Rejected By:</span>
+                                    <span className="font-medium text-red-700">{versionDetails.rejectedBy.name}</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {log.metadata && Object.keys(log.metadata).length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-slate-200">
+                                <span className="text-xs text-slate-500 font-medium">Additional Metadata:</span>
+                                <pre className="text-xs mt-1 text-slate-600 bg-white p-2 rounded border border-slate-200 overflow-x-auto">
+                                  {JSON.stringify(log.metadata, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Remarks Section */}
                       {log.remarks && (
-                        <p className="flex items-start gap-2 text-sm text-gray-700 mt-2">
-                          <FiMessageSquare className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                          <span>"{log.remarks}"</span>
-                        </p>
+                        <div className="mt-4 pt-4 border-t border-slate-200">
+                          <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1 mb-2">
+                            <FiMessageSquare className="h-3 w-3" />
+                            Remarks & Comments
+                          </h5>
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p className="text-sm text-amber-900 italic">"{log.remarks}"</p>
+                          </div>
+                        </div>
                       )}
+
+                      {/* User Details */}
+                      <div className="mt-4 pt-4 border-t border-slate-200">
+                        <h5 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1 mb-2">
+                          <FiUser className="h-3 w-3" />
+                          Performed By
+                        </h5>
+                        <div className="flex items-center gap-4 bg-slate-50 rounded-lg p-3">
+                          <div className="w-10 h-10 bg-primary-200 rounded-full flex items-center justify-center">
+                            <span className="text-primary-700 font-bold text-sm">
+                              {(log.performedBy?.name || 'SYS').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-800">{log.performedBy?.name || 'System'}</p>
+                            <p className="text-xs text-slate-500">{log.performedBy?.email || 'system@internal'}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="px-3 py-1 bg-primary-100 text-primary-800 text-xs font-semibold rounded-full capitalize">
+                              {log.roleAtTime}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">No audit logs found for the selected filter</p>
+            <div className="text-center py-12">
+              <FiFilter className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium">No audit logs found for the selected filter</p>
+              <p className="text-xs text-slate-500 mt-1">Try selecting a different action type</p>
+            </div>
           )}
         </div>
       )}
@@ -1212,108 +1746,17 @@ const ContractDetails = () => {
           )}
           
           <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={() => setShowRejectModal(false)}
-              className="btn-secondary"
-            >
+            <Button variant="secondary" onClick={() => setShowRejectModal(false)}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleReject}
               disabled={actionLoading || (needsFinanceStyleReject ? (!financeRemarkInternal.trim() || (sendClientRemark && !financeRemarkClient.trim())) : !rejectRemarks.trim())}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+              loading={actionLoading}
             >
-              {actionLoading ? 'Rejecting...' : 'Reject Contract'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Amendment Modal */}
-      <Modal
-        isOpen={showAmendModal}
-        onClose={() => setShowAmendModal(false)}
-        title="Create Amendment"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Create a new version of this contract with updated details. This will start the approval workflow again.
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Contract Name</label>
-            <input
-              type="text"
-              value={amendmentData.contractName}
-              onChange={(e) => setAmendmentData({ ...amendmentData, contractName: e.target.value })}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-            <input
-              type="number"
-              value={amendmentData.amount}
-              onChange={(e) => setAmendmentData({ ...amendmentData, amount: e.target.value })}
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Effective Date</label>
-            <input
-              type="date"
-              value={amendmentData.effectiveDate}
-              onChange={(e) => setAmendmentData({ ...amendmentData, effectiveDate: e.target.value })}
-              className="input-field"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button onClick={() => setShowAmendModal(false)} className="btn-secondary">
-              Cancel
-            </button>
-            <button
-              onClick={handleAmendment}
-              disabled={actionLoading}
-              className="btn-primary"
-            >
-              {actionLoading ? 'Creating...' : 'Create Amendment'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Cancel Modal */}
-      <Modal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        title="Cancel Contract"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Are you sure you want to cancel this contract? This action cannot be undone.
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reason (Optional)
-            </label>
-            <textarea
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              rows={3}
-              className="input-field"
-              placeholder="Enter reason for cancellation..."
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button onClick={() => setShowCancelModal(false)} className="btn-secondary">
-              Keep Contract
-            </button>
-            <button
-              onClick={handleCancel}
-              disabled={actionLoading}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              {actionLoading ? 'Cancelling...' : 'Cancel Contract'}
-            </button>
+              Reject Contract
+            </Button>
           </div>
         </div>
       </Modal>
@@ -1353,16 +1796,148 @@ const ContractDetails = () => {
             />
           </div>
           <div className="flex justify-end gap-3 pt-4">
-            <button onClick={() => setShowEditModal(false)} className="btn-secondary">
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleEdit}
               disabled={actionLoading}
-              className="btn-primary"
+              loading={actionLoading}
             >
-              {actionLoading ? 'Saving...' : 'Save Changes'}
-            </button>
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Amendment Modal */}
+      <Modal
+        isOpen={showAmendModal}
+        onClose={() => setShowAmendModal(false)}
+        title="Create Amendment"
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800 flex items-center gap-2">
+              <FiAlertCircle className="h-4 w-4" />
+              You are creating a new version (v{contract?.versionNumber + 1}). 
+              Select a version to base your amendment on and make necessary changes.
+            </p>
+          </div>
+
+          {/* Version Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Base Amendment On Version <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedVersionForAmendment?.versionNumber || ''}
+              onChange={(e) => {
+                const selected = versions.find(v => v.versionNumber === parseInt(e.target.value));
+                setSelectedVersionForAmendment(selected);
+                if (selected) {
+                  setEditData({
+                    contractName: selected.contractName || '',
+                    amount: selected.amount || '',
+                    effectiveDate: selected.effectiveDate?.split('T')[0] || '',
+                  });
+                }
+              }}
+              className="input-field"
+            >
+              {versions.map((version) => (
+                <option key={version.versionNumber} value={version.versionNumber}>
+                  Version {version.versionNumber} - {version.contractName} (${formatCurrency(version.amount)}) - {version.status}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Select which version data you want to use as the starting point for your amendment
+            </p>
+          </div>
+
+          {/* Show rejection reasons from selected version for context */}
+          {selectedVersionForAmendment && selectedVersionForAmendment.status === 'rejected' && (
+            <div className="p-3 border border-red-200 rounded-lg bg-red-50">
+              <p className="text-sm font-semibold text-red-800 mb-2">Rejection Reason from v{selectedVersionForAmendment.versionNumber}:</p>
+              {selectedVersionForAmendment.financeRemarkInternal && (
+                <div className="mb-2">
+                  <p className="text-xs text-gray-600 font-medium">Finance Internal:</p>
+                  <p className="text-sm text-red-700 italic">"{selectedVersionForAmendment.financeRemarkInternal}"</p>
+                </div>
+              )}
+              {selectedVersionForAmendment.financeRemarkClient && (
+                <div className="mb-2">
+                  <p className="text-xs text-gray-600 font-medium">Finance to Client:</p>
+                  <p className="text-sm text-red-700 italic">"{selectedVersionForAmendment.financeRemarkClient}"</p>
+                </div>
+              )}
+              {selectedVersionForAmendment.clientRemark && (
+                <div>
+                  <p className="text-xs text-gray-600 font-medium">Client Remark:</p>
+                  <p className="text-sm text-red-700 italic">"{selectedVersionForAmendment.clientRemark}"</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Pre-filled Form Fields */}
+          <div className="border-t pt-4">
+            <p className="text-sm font-semibold text-gray-700 mb-3">Edit Contract Details:</p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contract Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editData.contractName}
+                onChange={(e) => setEditData({ ...editData, contractName: e.target.value })}
+                className="input-field"
+                placeholder="Enter contract name"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Amount (USD) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={editData.amount}
+                onChange={(e) => setEditData({ ...editData, amount: e.target.value })}
+                className="input-field"
+                placeholder="Enter amount"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Effective Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={editData.effectiveDate}
+                onChange={(e) => setEditData({ ...editData, effectiveDate: e.target.value })}
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="secondary" onClick={() => setShowAmendModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="success"
+              onClick={handleAmend}
+              disabled={actionLoading || !editData.contractName || !editData.amount || !editData.effectiveDate}
+              loading={actionLoading}
+              iconLeading={<FiRefreshCw />}
+            >
+              {actionLoading ? 'Creating...' : `Create Version ${contract?.versionNumber + 1}`}
+            </Button>
           </div>
         </div>
       </Modal>
@@ -1402,20 +1977,17 @@ const ContractDetails = () => {
           </div>
           
           <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={() => setShowSendToClientModal(false)}
-              className="btn-secondary"
-            >
+            <Button variant="secondary" onClick={() => setShowSendToClientModal(false)}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleSendToClient}
               disabled={actionLoading || !legalClientRemark.trim()}
-              className="btn-primary flex items-center gap-2 disabled:opacity-50"
+              loading={actionLoading}
+              iconLeading={<FiSend />}
             >
-              <FiSend className="h-4 w-4" />
-              {actionLoading ? 'Sending...' : 'Send to Client'}
-            </button>
+              Send to Client
+            </Button>
           </div>
         </div>
       </Modal>

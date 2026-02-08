@@ -5,16 +5,15 @@ import ToastContainer from './ToastContainer';
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-50">
       <Sidebar />
       <ToastContainer />
-      
+
       {/* Main Content */}
-      <div className="lg:pl-60">
+      <div className="flex-1 flex flex-col min-w-0 pt-[52px] md:pt-0">
         {/* Top Bar */}
         <div className="sticky top-0 z-10 px-4 lg:px-6 py-3 bg-white border-b border-slate-200">
           <div className="flex items-center justify-between">
-            <div className="lg:hidden w-10"></div>
             <h1 className="text-lg font-semibold text-slate-800">
               Contract Management System
             </h1>
@@ -23,7 +22,7 @@ const Layout = () => {
         </div>
 
         {/* Page Content */}
-        <main className="px-4 lg:px-6 py-5">
+        <main className="flex-1 overflow-y-auto px-4 lg:px-6 py-5">
           <Outlet />
         </main>
       </div>

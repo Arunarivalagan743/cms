@@ -1,6 +1,7 @@
 const Contract = require('../models/Contract');
 const ContractVersion = require('../models/ContractVersion');
 const WorkflowConfig = require('../models/WorkflowConfig');
+const RolePermission = require('../models/RolePermission');
 const { createAuditLog, getContractAuditLogs } = require('../utils/auditLog');
 const {
   notifyFinanceOfSubmission,
@@ -10,8 +11,31 @@ const {
   notifyClientOfFinanceApproval,
   notifyClientOfFinanceRejection,
   notifyLegalOfClientApproval,
-  notifyLegalOfClientRejection
+  notifyLegalOfClientRejection,
+  notifyLegalOfSubmission,
+  notifyLegalOfFinanceApproval,
+  notifyClientOfActivation
 } = require('../utils/notifications');
+
+// Helper function to get user permissions from database
+const getUserPermissions = async (role) => {
+  const rolePermission = await RolePermission.findOne({ role });
+  if (rolePermission) {
+    return rolePermission.permissions;
+  }
+  // Return default permissions if not found
+  return {
+    canCreateContract: false,
+    canEditDraft: false,
+    canEditSubmitted: false,
+    canDeleteContract: false,
+    canSubmitContract: false,
+    canApproveContract: false,
+    canRejectContract: false,
+    canAmendContract: false,
+    canViewAllContracts: false
+  };
+};
 
 // @desc    Get all contracts (filtered by role)
 // @route   GET /api/contracts
@@ -65,6 +89,7 @@ exports.getContracts = async (req, res, next) => {
     contracts = await Contract.find(query)
       .populate('client', 'name email')
       .populate('createdBy', 'name email')
+      .populate('workflowId', 'name steps')
       .sort({ createdAt: -1 });
 
     // Get current version for each contract
@@ -73,11 +98,25 @@ exports.getContracts = async (req, res, next) => {
         const currentVersion = await ContractVersion.findOne({
           contract: contract._id,
           isCurrent: true
-        });
+        })
+          .populate('approvedByFinance', 'name email role')
+          .populate('approvedByClient', 'name email role')
+          .populate('rejectedBy', 'name email role');
 
         // Filter by status if provided
         if (status && currentVersion?.status !== status) {
           return null;
+        }
+
+        // Finance should NOT see contracts with Direct Client Workflow (no Finance step)
+        if ((req.user.role === 'finance' || req.user.role === 'senior_finance')) {
+          const workflow = contract.workflowId;
+          if (workflow) {
+            const hasFinanceStep = workflow.steps.some(s => s.isActive && (s.role === 'finance' || s.role === 'senior_finance'));
+            if (!hasFinanceStep) {
+              return null; // Skip Direct Client Workflow contracts
+            }
+          }
         }
 
         // Finance should NOT see draft contracts (only submitted ones)
@@ -85,9 +124,34 @@ exports.getContracts = async (req, res, next) => {
           return null;
         }
 
+        // Client should NOT see draft or pending_finance contracts (only after finance approval)
+        if (req.user.role === 'client' && (currentVersion?.status === 'draft' || currentVersion?.status === 'pending_finance')) {
+          return null;
+        }
+
         return {
-          ...contract.toObject(),
-          currentVersion
+          contractId: contract._id,
+          contractNumber: contract.contractNumber,
+          contractName: currentVersion?.contractName,
+          amount: currentVersion?.amount,
+          effectiveDate: currentVersion?.effectiveDate,
+          status: currentVersion?.status,
+          client: contract.client,
+          createdBy: contract.createdBy,
+          createdAt: contract.createdAt,
+          updatedAt: currentVersion?.updatedAt,
+          versionNumber: currentVersion?.versionNumber,
+          approvedByFinance: currentVersion?.approvedByFinance,
+          approvedByClient: currentVersion?.approvedByClient,
+          rejectedBy: currentVersion?.rejectedBy,
+          rejectionRemarks: currentVersion?.rejectionRemarks,
+          financeRemarkInternal: currentVersion?.financeRemarkInternal,
+          financeRemarkClient: currentVersion?.financeRemarkClient,
+          clientRemark: currentVersion?.clientRemark,
+          rejectedAt: currentVersion?.rejectedAt,
+          activatedAt: currentVersion?.clientApprovedAt,
+          submittedAt: currentVersion?.updatedAt,
+          workflow: contract.workflowId ? { id: contract.workflowId._id, name: contract.workflowId.name } : null
         };
       })
     );
@@ -112,7 +176,8 @@ exports.getContract = async (req, res, next) => {
   try {
     const contract = await Contract.findById(req.params.id)
       .populate('client', 'name email')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .populate('workflowId', 'name description steps');
 
     if (!contract) {
       return res.status(404).json({
@@ -129,19 +194,56 @@ exports.getContract = async (req, res, next) => {
       });
     }
 
-    // Get all versions
+    // Get all versions - sort by isCurrent first, then versionNumber descending
     const versions = await ContractVersion.find({ contract: contract._id })
       .populate('createdBy', 'name email')
       .populate('approvedByFinance', 'name email')
       .populate('approvedByClient', 'name email')
       .populate('rejectedBy', 'name email role')
-      .sort({ versionNumber: -1 });
+      .sort({ isCurrent: -1, versionNumber: -1 });  // Current version always first
+
+    // Log contract view activity
+    const latestVersion = versions && versions.length > 0 ? versions[0] : null;
+    if (latestVersion) {
+      // Role-specific view actions
+      let viewAction = 'contract_viewed';
+      if (req.user.role === 'client') viewAction = 'contract_viewed_client';
+      else if (req.user.role === 'finance') viewAction = 'contract_opened_review';
+
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: latestVersion._id,
+        action: viewAction,
+        userId: req.user._id,
+        role: req.user.role,
+        remarks: `Viewed contract with ${versions.length} version(s)`,
+        metadata: {
+          contractNumber: contract.contractNumber,
+          contractName: latestVersion.contractName,
+          versionNumber: latestVersion.versionNumber,
+          versionCount: versions.length,
+          viewedBy: req.user.name,
+          viewedByRole: req.user.role
+        },
+        req
+      });
+    }
 
     res.status(200).json({
       success: true,
       data: {
         ...contract.toObject(),
-        versions
+        versions,
+        workflow: contract.workflowId ? {
+          id: contract.workflowId._id,
+          name: contract.workflowId.name,
+          description: contract.workflowId.description,
+          steps: contract.workflowId.steps.filter(s => s.isActive).map(s => ({
+            order: s.order,
+            name: s.name,
+            role: s.role
+          }))
+        } : null
       }
     });
   } catch (error) {
@@ -218,10 +320,11 @@ exports.createContract = async (req, res, next) => {
     await createAuditLog({
       contractId: contract._id,
       contractVersionId: contractVersion._id,
-      action: 'created',
+      action: 'contract_created',
       userId: req.user._id,
       role: req.user.role,
-      metadata: { contractName, amount }
+      metadata: { contractName, amount },
+      req
     });
 
     res.status(201).json({
@@ -286,10 +389,11 @@ exports.updateContract = async (req, res, next) => {
     await createAuditLog({
       contractId: contract._id,
       contractVersionId: currentVersion._id,
-      action: 'updated',
+      action: 'contract_updated',
       userId: req.user._id,
       role: req.user.role,
-      metadata: { contractName, clientEmail, effectiveDate, amount }
+      metadata: { contractName, clientEmail, effectiveDate, amount },
+      req
     });
 
     res.status(200).json({
@@ -363,7 +467,7 @@ exports.submitContract = async (req, res, next) => {
       }
     }
 
-    // Update status based on workflow
+    // Update status only (no new version on submit)
     currentVersion.status = nextStatus;
     currentVersion.submittedAt = new Date();
     await currentVersion.save();
@@ -372,9 +476,22 @@ exports.submitContract = async (req, res, next) => {
     await createAuditLog({
       contractId: contract._id,
       contractVersionId: currentVersion._id,
-      action: 'submitted',
+      action: 'contract_submitted',
       userId: req.user._id,
-      role: req.user.role
+      role: req.user.role,
+      remarks: `Submitted to ${nextStatus === 'pending_client' ? 'client' : 'finance'}`,
+      req
+    });
+
+    // Also log status change
+    await createAuditLog({
+      contractId: contract._id,
+      contractVersionId: currentVersion._id,
+      action: 'status_changed',
+      userId: req.user._id,
+      role: 'system',
+      metadata: { from: 'draft', to: nextStatus },
+      req
     });
 
     // Notify based on workflow
@@ -384,6 +501,9 @@ exports.submitContract = async (req, res, next) => {
     if (notifyClient) {
       await notifyClientOfPendingApproval(contract, currentVersion);
     }
+
+    // Notify legal user (confirmation of their own submission)
+    await notifyLegalOfSubmission(contract, currentVersion);
 
     const message = nextStatus === 'pending_client' 
       ? 'Contract submitted directly to client for approval'
@@ -420,7 +540,7 @@ exports.approveContract = async (req, res, next) => {
     });
 
     // Validate based on role and status
-    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_finance')) {
+    if (req.user.role === 'finance' || req.user.role === 'senior_finance') {
       if (currentVersion.status !== 'pending_finance') {
         return res.status(400).json({
           success: false,
@@ -437,7 +557,7 @@ exports.approveContract = async (req, res, next) => {
         });
       }
 
-      // Finance/Super Admin approves -> move to pending client
+      // Update status only (no new version on approval)
       currentVersion.status = 'pending_client';
       currentVersion.approvedByFinance = req.user._id;
       currentVersion.financeApprovedAt = new Date();
@@ -447,14 +567,40 @@ exports.approveContract = async (req, res, next) => {
       await notifyClientOfPendingApproval(contract, currentVersion);
       await notifyClientOfFinanceApproval(contract, currentVersion);
 
+      // Notify legal user that Finance approved their contract
+      await notifyLegalOfFinanceApproval(contract, currentVersion);
+
       // Create audit log
       await createAuditLog({
         contractId: contract._id,
         contractVersionId: currentVersion._id,
-        action: 'approved',
+        action: 'contract_approved_finance',
         userId: req.user._id,
         role: req.user.role,
-        remarks: req.user.role === 'super_admin' ? 'Super Admin (Finance) approval granted' : 'Finance approval granted'
+        remarks: 'Finance approval granted',
+        req
+      });
+
+      // Log status change
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: currentVersion._id,
+        action: 'status_changed',
+        userId: req.user._id,
+        role: 'system',
+        metadata: { from: 'pending_finance', to: 'pending_client' },
+        req
+      });
+
+      // Log forwarding to client
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: currentVersion._id,
+        action: 'contract_forwarded_client',
+        userId: req.user._id,
+        role: req.user.role,
+        remarks: 'Contract forwarded to client after finance approval',
+        req
       });
 
       res.status(200).json({
@@ -463,9 +609,9 @@ exports.approveContract = async (req, res, next) => {
         data: currentVersion
       });
 
-    } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_client') || (req.user.role === 'super_admin' && currentVersion.status === 'pending_client')) {
-      // Check if this client is assigned to this contract (skip for super_admin)
-      if (req.user.role === 'client' && contract.client.toString() !== req.user._id.toString()) {
+    } else if (req.user.role === 'client') {
+      // Check if this client is assigned to this contract
+      if (contract.client.toString() !== req.user._id.toString()) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to approve this contract'
@@ -479,7 +625,14 @@ exports.approveContract = async (req, res, next) => {
         });
       }
 
-      // Client/Super Admin approves -> contract becomes active
+      // Deactivate any previously active version of this contract
+      // (Versioning Rule: Only one version may be Active at any given time)
+      await ContractVersion.updateMany(
+        { contract: contract._id, status: 'active', _id: { $ne: currentVersion._id } },
+        { $set: { isCurrent: false } }
+      );
+
+      // Update status only (no new version on approval)
       currentVersion.status = 'active';
       currentVersion.approvedByClient = req.user._id;
       currentVersion.clientApprovedAt = new Date();
@@ -489,14 +642,40 @@ exports.approveContract = async (req, res, next) => {
       await notifyLegalOfApproval(contract, currentVersion);
       await notifyLegalOfClientApproval(contract, currentVersion);
 
+      // Notify client that the contract is now active (confirmation)
+      await notifyClientOfActivation(contract, currentVersion);
+
       // Create audit log
       await createAuditLog({
         contractId: contract._id,
         contractVersionId: currentVersion._id,
-        action: 'approved',
+        action: 'contract_approved_client',
         userId: req.user._id,
         role: req.user.role,
-        remarks: req.user.role === 'super_admin' ? 'Super Admin (Client) approval granted - Contract is now active' : 'Client approval granted - Contract is now active'
+        remarks: 'Client approval granted - Contract is now active',
+        req
+      });
+
+      // Log contract activation
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: currentVersion._id,
+        action: 'contract_activated',
+        userId: req.user._id,
+        role: req.user.role,
+        remarks: 'Contract activated after client approval',
+        req
+      });
+
+      // Log status change
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: currentVersion._id,
+        action: 'status_changed',
+        userId: req.user._id,
+        role: 'system',
+        metadata: { from: 'pending_client', to: 'active' },
+        req
       });
 
       res.status(200).json({
@@ -546,13 +725,8 @@ exports.rejectContract = async (req, res, next) => {
       isCurrent: true
     });
 
-    // Determine effective role for super_admin based on contract status
-    const effectiveRole = req.user.role === 'super_admin' 
-      ? (currentVersion.status === 'pending_finance' ? 'finance' : (currentVersion.status === 'pending_client' ? 'client' : null))
-      : req.user.role;
-
     // Validate based on role and status
-    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_finance')) {
+    if (req.user.role === 'finance' || req.user.role === 'senior_finance') {
       if (currentVersion.status !== 'pending_finance') {
         return res.status(400).json({
           success: false,
@@ -568,9 +742,8 @@ exports.rejectContract = async (req, res, next) => {
           message: 'Conflict of interest: You cannot reject a contract you created'
         });
       }
-    } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && currentVersion.status === 'pending_client')) {
-      // Client check (skip for super_admin)
-      if (req.user.role === 'client' && contract.client.toString() !== req.user._id.toString()) {
+    } else if (req.user.role === 'client') {
+      if (contract.client.toString() !== req.user._id.toString()) {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to reject this contract'
@@ -595,15 +768,14 @@ exports.rejectContract = async (req, res, next) => {
     currentVersion.rejectedBy = req.user._id;
     currentVersion.rejectedAt = new Date();
     
-    // Store remarks based on who is rejecting (super_admin acts as effective role)
-    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && effectiveRole === 'finance')) {
-      // Finance/Super Admin (as Finance) provides internal remarks (required) and optional client-facing remarks
+    // Store remarks based on who is rejecting
+    if (req.user.role === 'finance' || req.user.role === 'senior_finance') {
       const { remarksInternal, remarksClient } = req.body;
       currentVersion.financeRemarkInternal = remarksInternal || remarks;
       // Only store client remark if Finance chose to send it (not null/undefined)
       currentVersion.financeRemarkClient = remarksClient || null;
       currentVersion.rejectionRemarks = remarksInternal || remarks; // backward compatibility - store internal
-    } else if (req.user.role === 'client' || (req.user.role === 'super_admin' && effectiveRole === 'client')) {
+    } else if (req.user.role === 'client') {
       currentVersion.clientRemark = remarks;
       currentVersion.rejectionRemarks = remarks; // backward compatibility
     }
@@ -611,13 +783,14 @@ exports.rejectContract = async (req, res, next) => {
     await currentVersion.save();
 
     // Notify legal user - send internal remarks for legal to see full details
-    const notificationRemarks = req.user.role === 'finance' 
+    const isFinanceRole = req.user.role === 'finance' || req.user.role === 'senior_finance';
+    const notificationRemarks = isFinanceRole 
       ? (req.body.remarksInternal || remarks) 
       : remarks;
     await notifyLegalOfRejection(contract, currentVersion, notificationRemarks);
 
-    // Notify client if Finance/Super Admin (as Finance) rejected AND chose to send client message
-    if (req.user.role === 'finance' || (req.user.role === 'super_admin' && effectiveRole === 'finance')) {
+    // Notify client if Finance rejected AND chose to send client message
+    if (isFinanceRole) {
       const clientRemarks = req.body.remarksClient;
       // Only notify client if Finance explicitly chose to send a message
       if (clientRemarks) {
@@ -625,20 +798,56 @@ exports.rejectContract = async (req, res, next) => {
       }
     }
 
-    // Notify legal if Client/Super Admin (as Client) rejected
-    if (req.user.role === 'client' || (req.user.role === 'super_admin' && effectiveRole === 'client')) {
+    // Notify legal if Client rejected
+    if (req.user.role === 'client') {
       await notifyLegalOfClientRejection(contract, currentVersion, remarks);
     }
 
     // Create audit log with internal remarks
+    const rejAction = isFinanceRole ? 'contract_rejected_finance' : 'contract_rejected_client';
     await createAuditLog({
       contractId: contract._id,
       contractVersionId: currentVersion._id,
-      action: 'rejected',
+      action: rejAction,
       userId: req.user._id,
       role: req.user.role,
-      remarks: notificationRemarks
+      remarks: notificationRemarks,
+      req
     });
+
+    // Log status change
+    await createAuditLog({
+      contractId: contract._id,
+      contractVersionId: currentVersion._id,
+      action: 'status_changed',
+      userId: req.user._id,
+      role: 'system',
+      metadata: { from: currentVersion.status === 'rejected' ? 'pending' : 'pending', to: 'rejected', rejectedBy: req.user.role },
+      req
+    });
+
+    // Log remarks added
+    if (isFinanceRole) {
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: currentVersion._id,
+        action: 'finance_remarks_added',
+        userId: req.user._id,
+        role: req.user.role,
+        remarks: notificationRemarks,
+        req
+      });
+    } else if (req.user.role === 'client') {
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: currentVersion._id,
+        action: 'client_remarks_added',
+        userId: req.user._id,
+        role: req.user.role,
+        remarks,
+        req
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -650,10 +859,10 @@ exports.rejectContract = async (req, res, next) => {
   }
 };
 
-// @desc    Create amendment for rejected contract
+// @desc    Create amendment from rejected contract
 // @route   POST /api/contracts/:id/amend
 // @access  Private/Legal
-exports.createAmendment = async (req, res, next) => {
+exports.amendContract = async (req, res, next) => {
   try {
     const { contractName, clientEmail, effectiveDate, amount } = req.body;
 
@@ -666,6 +875,15 @@ exports.createAmendment = async (req, res, next) => {
       });
     }
 
+    // Check if user has permission to amend (canEditDraft allows creating amendments)
+    const permissions = await getUserPermissions(req.user.role);
+    if (!permissions.canEditDraft && !permissions.canEditSubmitted) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to create amendments'
+      });
+    }
+
     // Check if user is the creator
     if (contract.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({
@@ -674,11 +892,25 @@ exports.createAmendment = async (req, res, next) => {
       });
     }
 
-    // Get current version
-    const currentVersion = await ContractVersion.findOne({
+    // Get current version - try isCurrent first, then fall back to latest by versionNumber
+    let currentVersion = await ContractVersion.findOne({
       contract: contract._id,
       isCurrent: true
     });
+
+    // Fallback: if no isCurrent version (e.g. orphaned state), use the latest version
+    if (!currentVersion) {
+      currentVersion = await ContractVersion.findOne({
+        contract: contract._id
+      }).sort({ versionNumber: -1 });
+    }
+
+    if (!currentVersion) {
+      return res.status(404).json({
+        success: false,
+        message: 'No contract version found'
+      });
+    }
 
     // Only rejected contracts can be amended
     if (currentVersion.status !== 'rejected') {
@@ -688,25 +920,86 @@ exports.createAmendment = async (req, res, next) => {
       });
     }
 
-    // Mark current version as not current
+    // Check if there is already a draft version from a prior failed amendment attempt
+    const existingDraft = await ContractVersion.findOne({
+      contract: contract._id,
+      status: 'draft',
+      versionNumber: { $gt: currentVersion.versionNumber }
+    });
+
+    if (existingDraft) {
+      // Resume the previously created draft — update it with new data and mark current
+      existingDraft.contractName = contractName || existingDraft.contractName;
+      existingDraft.clientEmail = clientEmail || existingDraft.clientEmail;
+      existingDraft.effectiveDate = effectiveDate || existingDraft.effectiveDate;
+      existingDraft.amount = amount !== undefined ? amount : existingDraft.amount;
+      existingDraft.isCurrent = true;
+      await existingDraft.save();
+
+      // Ensure the rejected version is not current
+      if (currentVersion.isCurrent) {
+        currentVersion.isCurrent = false;
+        await currentVersion.save();
+      }
+
+      // Sync contract.currentVersion
+      contract.currentVersion = existingDraft.versionNumber;
+      await contract.save();
+
+      // Audit log for resumed amendment
+      await createAuditLog({
+        contractId: contract._id,
+        contractVersionId: existingDraft._id,
+        action: 'contract_amended',
+        userId: req.user._id,
+        role: req.user.role,
+        metadata: {
+          fromVersion: currentVersion.versionNumber,
+          toVersion: existingDraft.versionNumber,
+          resumed: true,
+          changes: { contractName, clientEmail, effectiveDate, amount }
+        },
+        req
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Amendment created successfully. You can now edit and resubmit.',
+        data: existingDraft
+      });
+    }
+
+    // Mark current version as not current (making it immutable)
     currentVersion.isCurrent = false;
     await currentVersion.save();
 
-    // Create new version
-    const newVersionNumber = contract.currentVersion + 1;
-    const newVersion = await ContractVersion.create({
-      contract: contract._id,
-      versionNumber: newVersionNumber,
-      contractName: contractName || currentVersion.contractName,
-      clientEmail: clientEmail || currentVersion.clientEmail,
-      effectiveDate: effectiveDate || currentVersion.effectiveDate,
-      amount: amount || currentVersion.amount,
-      status: 'draft',
-      createdBy: req.user._id,
-      isCurrent: true
-    });
+    // Determine next version number from actual data (not the potentially stale contract.currentVersion)
+    const latestVersion = await ContractVersion.findOne({ contract: contract._id })
+      .sort({ versionNumber: -1 })
+      .select('versionNumber');
+    const newVersionNumber = (latestVersion ? latestVersion.versionNumber : contract.currentVersion) + 1;
 
-    // Update contract
+    let newVersion;
+    try {
+      newVersion = await ContractVersion.create({
+        contract: contract._id,
+        versionNumber: newVersionNumber,
+        contractName: contractName || currentVersion.contractName,
+        clientEmail: clientEmail || currentVersion.clientEmail,
+        effectiveDate: effectiveDate || currentVersion.effectiveDate,
+        amount: amount !== undefined ? amount : currentVersion.amount,
+        status: 'draft',
+        createdBy: req.user._id,
+        isCurrent: true
+      });
+    } catch (createError) {
+      // Roll back: restore isCurrent on the rejected version so state isn't orphaned
+      currentVersion.isCurrent = true;
+      await currentVersion.save();
+      throw createError;
+    }
+
+    // Update contract with new version number
     contract.currentVersion = newVersionNumber;
     await contract.save();
 
@@ -714,87 +1007,43 @@ exports.createAmendment = async (req, res, next) => {
     await createAuditLog({
       contractId: contract._id,
       contractVersionId: newVersion._id,
-      action: 'amended',
+      action: 'contract_amended',
       userId: req.user._id,
       role: req.user.role,
-      metadata: { previousVersion: currentVersion.versionNumber, newVersion: newVersionNumber }
+      metadata: { 
+        fromVersion: currentVersion.versionNumber,
+        toVersion: newVersionNumber,
+        changes: { contractName, clientEmail, effectiveDate, amount }
+      },
+      req
+    });
+
+    // Log version increment
+    await createAuditLog({
+      contractId: contract._id,
+      contractVersionId: newVersion._id,
+      action: 'version_incremented',
+      userId: req.user._id,
+      role: 'system',
+      metadata: { fromVersion: currentVersion.versionNumber, toVersion: newVersionNumber },
+      req
+    });
+
+    // Log is_current change
+    await createAuditLog({
+      contractId: contract._id,
+      contractVersionId: newVersion._id,
+      action: 'is_current_updated',
+      userId: req.user._id,
+      role: 'system',
+      metadata: { oldCurrentVersion: currentVersion.versionNumber, newCurrentVersion: newVersionNumber },
+      req
     });
 
     res.status(201).json({
       success: true,
-      message: 'Amendment created successfully',
+      message: 'Amendment created successfully. You can now edit and resubmit.',
       data: newVersion
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Cancel contract
-// @route   POST /api/contracts/:id/cancel
-// @access  Private/Client/Super Admin
-exports.cancelContract = async (req, res, next) => {
-  try {
-    const { reason } = req.body;
-
-    const contract = await Contract.findById(req.params.id);
-
-    if (!contract) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contract not found'
-      });
-    }
-
-    // Only client (assigned to contract) or super_admin can cancel
-    if (req.user.role === 'client') {
-      if (contract.client.toString() !== req.user._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to cancel this contract'
-        });
-      }
-    } else if (req.user.role !== 'super_admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Only client or admin can cancel contracts'
-      });
-    }
-
-    // Get current version
-    const currentVersion = await ContractVersion.findOne({
-      contract: contract._id,
-      isCurrent: true
-    });
-
-    // Can only cancel when status is pending_client or rejected
-    const allowedStatuses = ['pending_client', 'rejected'];
-    if (!allowedStatuses.includes(currentVersion.status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Contract can only be cancelled when status is: ${allowedStatuses.join(', ')}. Current status: ${currentVersion.status}`
-      });
-    }
-
-    // Cancel the contract
-    currentVersion.status = 'cancelled';
-    currentVersion.clientRemark = reason || 'Contract cancelled';
-    await currentVersion.save();
-
-    // Create audit log
-    await createAuditLog({
-      contractId: contract._id,
-      contractVersionId: currentVersion._id,
-      action: 'cancelled',
-      userId: req.user._id,
-      role: req.user.role,
-      remarks: reason || 'Contract cancelled'
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Contract cancelled successfully',
-      data: currentVersion
     });
   } catch (error) {
     next(error);
@@ -845,12 +1094,21 @@ exports.getContractVersions = async (req, res, next) => {
 // @access  Private/Super Admin
 exports.getContractAudit = async (req, res, next) => {
   try {
-    const contract = await Contract.findById(req.params.id);
+    const contract = await Contract.findById(req.params.id)
+      .populate('client', '_id');
 
     if (!contract) {
       return res.status(404).json({
         success: false,
         message: 'Contract not found'
+      });
+    }
+
+    // Check access for clients - they can only see audit logs for their own contracts
+    if (req.user.role === 'client' && contract.client._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view audit logs for this contract'
       });
     }
 
@@ -881,7 +1139,10 @@ exports.sendRemarksToClient = async (req, res, next) => {
     }
 
     // Get the current version
-    const currentVersion = await ContractVersion.findById(contract.currentVersion);
+    const currentVersion = await ContractVersion.findOne({
+      contract: contract._id,
+      isCurrent: true
+    });
     if (!currentVersion) {
       return res.status(404).json({
         success: false,
@@ -923,10 +1184,6 @@ exports.sendRemarksToClient = async (req, res, next) => {
     currentVersion.financeRemarkClient = remarksClient;
     await currentVersion.save();
 
-    // Also update the contract's financeRemarkClient for quick access
-    contract.financeRemarkClient = remarksClient;
-    await contract.save();
-
     // Notify client
     await notifyClientOfFinanceRejection(contract, currentVersion, remarksClient);
 
@@ -937,9 +1194,11 @@ exports.sendRemarksToClient = async (req, res, next) => {
       action: 'sent_remarks_to_client',
       userId: req.user._id,
       role: req.user.role,
-      details: {
+      remarks: `Sent remarks to client: ${remarksClient}`,
+      metadata: {
         remarksClient: remarksClient
-      }
+      },
+      req
     });
 
     res.status(200).json({

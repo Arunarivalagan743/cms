@@ -2,6 +2,7 @@ const User = require('../models/User');
 const crypto = require('crypto');
 const { sendInviteEmail, sendResetPasswordEmail } = require('../utils/email');
 const { createSystemLog } = require('../utils/systemLog');
+const { createAuditLog } = require('../utils/auditLog');
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -94,6 +95,26 @@ exports.createUser = async (req, res, next) => {
         assignedRole: user.role,
       },
       req,
+    });
+
+    // Audit log for user_created
+    await createAuditLog({
+      action: 'user_created',
+      userId: req.user._id,
+      role: req.user.role,
+      remarks: `Created user: ${user.name} (${user.email}) with role ${user.role}`,
+      metadata: { userName: user.name, userEmail: user.email, assignedRole: user.role },
+      req
+    });
+
+    // Audit log for role_assigned
+    await createAuditLog({
+      action: 'role_assigned',
+      userId: req.user._id,
+      role: req.user.role,
+      remarks: `Assigned role ${user.role} to ${user.name}`,
+      metadata: { targetUserId: user._id, targetUserName: user.name, assignedRole: user.role },
+      req
     });
 
     // Log invite sent
@@ -232,6 +253,16 @@ exports.setPassword = async (req, res, next) => {
       req,
     });
 
+    // Audit log for password_reset
+    await createAuditLog({
+      action: 'password_reset',
+      userId: user._id,
+      role: user.role,
+      remarks: 'Password set via invite link (initial setup)',
+      metadata: { type: 'initial_setup', email: user.email },
+      req
+    });
+
     res.status(200).json({
       success: true,
       message: 'Password set successfully. You can now login.'
@@ -321,6 +352,16 @@ exports.forgotPassword = async (req, res, next) => {
       req,
     });
 
+    // Audit log for password_reset request
+    await createAuditLog({
+      action: 'password_reset',
+      userId: user._id,
+      role: user.role,
+      remarks: 'Password reset requested',
+      metadata: { type: 'reset_requested', email: user.email },
+      req
+    });
+
     res.status(200).json({
       success: true,
       message: 'Password reset email sent',
@@ -385,6 +426,16 @@ exports.resetPassword = async (req, res, next) => {
         email: user.email,
       },
       req,
+    });
+
+    // Audit log for password_reset completed
+    await createAuditLog({
+      action: 'password_reset',
+      userId: user._id,
+      role: user.role,
+      remarks: 'Password reset completed',
+      metadata: { type: 'reset_completed', email: user.email },
+      req
     });
 
     res.status(200).json({
@@ -457,6 +508,16 @@ exports.updateUser = async (req, res, next) => {
       req,
     });
 
+    // Audit log for user_updated
+    await createAuditLog({
+      action: 'user_updated',
+      userId: req.user._id,
+      role: req.user.role,
+      remarks: `Updated user: ${user.name}`,
+      metadata: { targetUserId: user._id, targetUserName: user.name, changes },
+      req
+    });
+
     // Log role change separately if role changed
     if (changes.role) {
       await createSystemLog({
@@ -469,6 +530,26 @@ exports.updateUser = async (req, res, next) => {
           toRole: role,
         },
         req,
+      });
+
+      // Audit log for role_assigned (new role)
+      await createAuditLog({
+        action: 'role_assigned',
+        userId: req.user._id,
+        role: req.user.role,
+        remarks: `Changed role from ${oldRole} to ${role} for ${user.name}`,
+        metadata: { targetUserId: user._id, targetUserName: user.name, fromRole: oldRole, toRole: role },
+        req
+      });
+
+      // Audit log for role_removed (old role)
+      await createAuditLog({
+        action: 'role_removed',
+        userId: req.user._id,
+        role: req.user.role,
+        remarks: `Removed role ${oldRole} from ${user.name}`,
+        metadata: { targetUserId: user._id, targetUserName: user.name, removedRole: oldRole },
+        req
       });
     }
 
@@ -530,6 +611,16 @@ exports.deleteUser = async (req, res, next) => {
         userRole: user.role,
       },
       req,
+    });
+
+    // Audit log for user_deleted
+    await createAuditLog({
+      action: 'user_deleted',
+      userId: req.user._id,
+      role: req.user.role,
+      remarks: `Deleted/deactivated user: ${user.name} (${user.email})`,
+      metadata: { targetUserId: user._id, targetUserName: user.name, targetUserEmail: user.email, targetUserRole: user.role },
+      req
     });
 
     res.status(200).json({

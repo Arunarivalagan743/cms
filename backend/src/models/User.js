@@ -24,14 +24,15 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['super_admin', 'legal', 'finance', 'senior_finance', 'client'],
+    lowercase: true,
+    trim: true,
     default: 'legal'
   },
   // Track role history for viewing past activities
   previousRoles: [{
     role: {
       type: String,
-      enum: ['super_admin', 'legal', 'finance', 'senior_finance', 'client'],
+      lowercase: true,
     },
     changedAt: {
       type: Date,
@@ -93,7 +94,7 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
 };
 
 // Database indexes for faster queries
-userSchema.index({ role: 1 });
+// Note: Composite index { role: 1, isActive: 1 } covers queries on just 'role' as well (left-prefix rule)
 userSchema.index({ isActive: 1 });
 userSchema.index({ role: 1, isActive: 1 });
 
