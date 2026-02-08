@@ -60,14 +60,14 @@ const actionConfig = {
   workflow_created: { icon: FiSettings, color: 'text-indigo-600', bg: 'bg-indigo-100', label: 'Workflow Created', category: 'Admin' },
   workflow_updated: { icon: FiSettings, color: 'text-indigo-600', bg: 'bg-indigo-100', label: 'Workflow Updated', category: 'Admin' },
   workflow_activated: { icon: FiZap, color: 'text-green-600', bg: 'bg-green-100', label: 'Workflow Activated', category: 'Admin' },
-  workflow_deactivated: { icon: FiSlash, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Workflow Deactivated', category: 'Admin' },
+  workflow_deactivated: { icon: FiSlash, color: 'text-slate-600', bg: 'bg-slate-100', label: 'Workflow Deactivated', category: 'Admin' },
   system_config_updated: { icon: FiSettings, color: 'text-slate-600', bg: 'bg-slate-100', label: 'System Config Updated', category: 'Admin' },
   audit_viewed: { icon: FiEye, color: 'text-slate-500', bg: 'bg-slate-100', label: 'Audit Viewed', category: 'Admin' },
 
   // Legal Actions
   contract_created: { icon: FiFileText, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Contract Created', category: 'Legal' },
   contract_updated: { icon: FiEdit, color: 'text-amber-600', bg: 'bg-amber-100', label: 'Contract Updated', category: 'Legal' },
-  draft_saved: { icon: FiFileText, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Draft Saved', category: 'Legal' },
+  draft_saved: { icon: FiFileText, color: 'text-slate-600', bg: 'bg-slate-100', label: 'Draft Saved', category: 'Legal' },
   contract_deleted_draft: { icon: FiUserMinus, color: 'text-red-600', bg: 'bg-red-100', label: 'Draft Deleted', category: 'Legal' },
   contract_submitted: { icon: FiSend, color: 'text-indigo-600', bg: 'bg-indigo-100', label: 'Contract Submitted', category: 'Legal' },
   contract_viewed: { icon: FiEye, color: 'text-blue-500', bg: 'bg-blue-100', label: 'Contract Viewed', category: 'Legal' },
@@ -109,14 +109,14 @@ const actionConfig = {
   version_incremented: { icon: FiRepeat, color: 'text-purple-600', bg: 'bg-purple-100', label: 'Version Incremented', category: 'System' },
   is_current_updated: { icon: FiEdit, color: 'text-amber-600', bg: 'bg-amber-100', label: 'Current Version Updated', category: 'System' },
   notification_sent: { icon: FiBell, color: 'text-blue-500', bg: 'bg-blue-100', label: 'Notification Sent', category: 'System' },
-  notification_read: { icon: FiBell, color: 'text-gray-500', bg: 'bg-gray-100', label: 'Notification Read', category: 'System' },
+  notification_read: { icon: FiBell, color: 'text-slate-500', bg: 'bg-slate-100', label: 'Notification Read', category: 'System' },
   access_denied: { icon: FiSlash, color: 'text-red-600', bg: 'bg-red-100', label: 'Access Denied', category: 'System' },
   permission_denied: { icon: FiShield, color: 'text-red-600', bg: 'bg-red-100', label: 'Permission Denied', category: 'System' },
   validation_failed: { icon: FiAlertTriangle, color: 'text-orange-600', bg: 'bg-orange-100', label: 'Validation Failed', category: 'System' },
   workflow_violation: { icon: FiAlertTriangle, color: 'text-red-600', bg: 'bg-red-100', label: 'Workflow Violation', category: 'System' },
   concurrent_update_blocked: { icon: FiSlash, color: 'text-red-600', bg: 'bg-red-100', label: 'Concurrent Update Blocked', category: 'System' },
-  session_expired: { icon: FiClock, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Session Expired', category: 'System' },
-  token_expired: { icon: FiClock, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Token Expired', category: 'System' },
+  session_expired: { icon: FiClock, color: 'text-slate-600', bg: 'bg-slate-100', label: 'Session Expired', category: 'System' },
+  token_expired: { icon: FiClock, color: 'text-slate-600', bg: 'bg-slate-100', label: 'Token Expired', category: 'System' },
 
   // Legacy Actions
   created: { icon: FiFileText, color: 'text-blue-600', bg: 'bg-blue-100', label: 'Contract Created', category: 'Legacy' },
@@ -137,7 +137,7 @@ const categoryColors = {
   Client: 'bg-amber-100 text-amber-700',
   Auth: 'bg-slate-100 text-slate-700',
   System: 'bg-indigo-100 text-indigo-700',
-  Legacy: 'bg-gray-100 text-gray-600',
+  Legacy: 'bg-slate-100 text-slate-600',
 };
 
 const AuditTrail = () => {
@@ -264,22 +264,22 @@ const AuditTrail = () => {
       <div className="space-y-2 text-sm">
         {/* Performed By */}
         <div className="flex items-center gap-2">
-          <span className="text-gray-500 w-28 flex-shrink-0">Performed By:</span>
-          <span className="font-medium text-gray-900">{performedBy?.name || 'System'}</span>
-          {performedBy?.email && <span className="text-gray-500 text-xs">({performedBy.email})</span>}
+          <span className="text-slate-500 w-28 flex-shrink-0">Performed By:</span>
+          <span className="font-medium text-slate-900">{performedBy?.name || 'System'}</span>
+          {performedBy?.email && <span className="text-slate-500 text-xs">({performedBy.email})</span>}
         </div>
 
         {/* Role */}
         <div className="flex items-center gap-2">
-          <span className="text-gray-500 w-28 flex-shrink-0">Role:</span>
+          <span className="text-slate-500 w-28 flex-shrink-0">Role:</span>
           <RoleBadge role={roleAtTime} size="xs" />
         </div>
 
         {/* Contract Info (if exists) */}
         {contract && (
           <div className="flex items-center gap-2">
-            <span className="text-gray-500 w-28 flex-shrink-0">Contract #:</span>
-            <span className="font-mono text-gray-900">{contract.contractNumber || 'N/A'}</span>
+            <span className="text-slate-500 w-28 flex-shrink-0">Contract #:</span>
+            <span className="font-mono text-slate-900">{contract.contractNumber || 'N/A'}</span>
           </div>
         )}
 
@@ -288,23 +288,23 @@ const AuditTrail = () => {
           <>
             {contractVersion.contractName && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-28 flex-shrink-0">Contract Name:</span>
-                <span className="font-medium text-gray-900">{contractVersion.contractName}</span>
+                <span className="text-slate-500 w-28 flex-shrink-0">Contract Name:</span>
+                <span className="font-medium text-slate-900">{contractVersion.contractName}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 w-28 flex-shrink-0">Version:</span>
-              <span className="font-mono text-gray-700">v{contractVersion.versionNumber}</span>
+              <span className="text-slate-500 w-28 flex-shrink-0">Version:</span>
+              <span className="font-mono text-slate-700">v{contractVersion.versionNumber}</span>
             </div>
             {contractVersion.status && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-28 flex-shrink-0">Status:</span>
+                <span className="text-slate-500 w-28 flex-shrink-0">Status:</span>
                 <StatusBadge status={contractVersion.status} size="xs" />
               </div>
             )}
             {contractVersion.amount && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-28 flex-shrink-0">Amount:</span>
+                <span className="text-slate-500 w-28 flex-shrink-0">Amount:</span>
                 <span className="font-semibold text-green-700">
                   ${parseFloat(contractVersion.amount).toLocaleString()}
                 </span>
@@ -316,16 +316,16 @@ const AuditTrail = () => {
         {/* Remarks */}
         {remarks && (
           <div className="flex gap-2">
-            <span className="text-gray-500 w-28 flex-shrink-0">Remarks:</span>
-            <span className="text-gray-700 italic">"{remarks}"</span>
+            <span className="text-slate-500 w-28 flex-shrink-0">Remarks:</span>
+            <span className="text-slate-700 italic">"{remarks}"</span>
           </div>
         )}
 
         {/* Metadata */}
         {metadata && Object.keys(metadata).length > 0 && (
           <div className="mt-2">
-            <span className="text-gray-500 text-xs font-medium">Metadata:</span>
-            <pre className="mt-1 p-2 bg-gray-50 rounded text-xs text-gray-600 overflow-x-auto max-h-32">
+            <span className="text-slate-500 text-xs font-medium">Metadata:</span>
+            <pre className="mt-1 p-2 bg-slate-50 rounded text-xs text-slate-600 overflow-x-auto max-h-32">
               {JSON.stringify(metadata, null, 2)}
             </pre>
           </div>
@@ -334,8 +334,8 @@ const AuditTrail = () => {
         {/* IP Address */}
         {ipAddress && ipAddress !== 'unknown' && (
           <div className="flex items-center gap-2">
-            <span className="text-gray-500 w-28 flex-shrink-0">IP Address:</span>
-            <span className="text-gray-600 text-xs font-mono">{ipAddress}</span>
+            <span className="text-slate-500 w-28 flex-shrink-0">IP Address:</span>
+            <span className="text-slate-600 text-xs font-mono">{ipAddress}</span>
           </div>
         )}
       </div>
@@ -351,15 +351,15 @@ const AuditTrail = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Audit Trail</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900">Audit Trail</h2>
+          <p className="text-slate-600 mt-1">
             Append-only audit trail of all contract, user, and system actions. Logs cannot be edited or deleted.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'bg-gray-200' : ''}`}
+            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'bg-slate-200' : ''}`}
           >
             <FiFilter className="h-4 w-4" />
             Filters
@@ -378,7 +378,7 @@ const AuditTrail = () => {
       {/* Stats Cards */}
       {stats && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Audit Overview</h3>
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">Audit Overview</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
               <div className="text-2xl font-bold text-blue-700">{stats.overview?.totalLogs || 0}</div>
@@ -401,7 +401,7 @@ const AuditTrail = () => {
           {/* Contract Lifecycle Stats */}
           {stats.contractLifecycle?.length > 0 && (
             <div className="mt-3">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Contract Lifecycle</h4>
+              <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Contract Lifecycle</h4>
               <div className="flex flex-wrap gap-2">
                 {stats.contractLifecycle.map((item) => {
                   const display = getActionDisplay(item._id);
@@ -421,7 +421,7 @@ const AuditTrail = () => {
       )}
 
       {/* Role Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-slate-200">
         <nav className="flex space-x-1 overflow-x-auto pb-px" aria-label="Tabs">
           {[
             { key: 'all', label: 'All Logs', icon: FiActivity },
@@ -440,7 +440,7 @@ const AuditTrail = () => {
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.key
                   ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -453,11 +453,11 @@ const AuditTrail = () => {
       {/* Filters */}
       {showFilters && activeTab === 'all' && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Filter Audit Logs</h3>
+          <h3 className="text-sm font-semibold text-slate-700 mb-4">Filter Audit Logs</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             {/* Role Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
               <select
                 className="input-field"
                 value={filters.role}
@@ -474,7 +474,7 @@ const AuditTrail = () => {
 
             {/* User Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">User</label>
               <select
                 className="input-field"
                 value={filters.userId}
@@ -489,7 +489,7 @@ const AuditTrail = () => {
 
             {/* Action Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Action</label>
               <select
                 className="input-field"
                 value={filters.action}
@@ -532,7 +532,7 @@ const AuditTrail = () => {
 
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Search</label>
               <input
                 type="text"
                 className="input-field"
@@ -544,7 +544,7 @@ const AuditTrail = () => {
 
             {/* Date Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
               <input
                 type="date"
                 className="input-field"
@@ -553,7 +553,7 @@ const AuditTrail = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
               <input
                 type="date"
                 className="input-field"
@@ -579,16 +579,16 @@ const AuditTrail = () => {
         />
       ) : (
         <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-slate-700">
               Audit Log Entries ({pagination.total} total)
               {activeTab !== 'all' && (
-                <span className="ml-2 text-xs text-gray-500">
+                <span className="ml-2 text-xs text-slate-500">
                   — Filtered by: <span className="capitalize font-medium">{activeTab.replace('_', ' ')}</span>
                 </span>
               )}
             </h3>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-slate-500">
               {pagination.total > 0 && (
                 <>Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)}</>
               )}
@@ -597,19 +597,19 @@ const AuditTrail = () => {
 
           {/* Table view */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contract</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Timestamp</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">User</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Role</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Contract</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Remarks</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Details</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-200">
                 {logs.map((log) => {
                   const actionDisplay = getActionDisplay(log.action);
                   const ActionIcon = actionDisplay.icon;
@@ -619,14 +619,14 @@ const AuditTrail = () => {
                     <>
                       <tr
                         key={log._id}
-                        className={`hover:bg-gray-50 cursor-pointer transition-colors ${
+                        className={`hover:bg-slate-50 cursor-pointer transition-colors ${
                           !log.success ? 'bg-red-50/50' : ''
                         }`}
                         onClick={() => setExpandedLog(isExpanded ? null : log._id)}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-600">
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-600">
                           <div className="flex items-center gap-1">
-                            <FiClock className="h-3 w-3 text-gray-400" />
+                            <FiClock className="h-3 w-3 text-slate-400" />
                             {formatDate(log.createdAt, true)}
                           </div>
                         </td>
@@ -639,17 +639,17 @@ const AuditTrail = () => {
                               <span className={`text-xs font-semibold ${actionDisplay.color}`}>
                                 {actionDisplay.label}
                               </span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full inline-block ml-1 ${categoryColors[actionDisplay.category] || 'bg-gray-100 text-gray-600'}`}>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full inline-block ml-1 ${categoryColors[actionDisplay.category] || 'bg-slate-100 text-slate-600'}`}>
                                 {actionDisplay.category}
                               </span>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-slate-900">
                             {log.performedBy?.name || 'System'}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-slate-500">
                             {log.performedBy?.email || ''}
                           </div>
                         </td>
@@ -659,33 +659,33 @@ const AuditTrail = () => {
                         <td className="px-4 py-3 whitespace-nowrap">
                           {log.contract ? (
                             <div>
-                              <span className="font-mono text-xs text-gray-900">
+                              <span className="font-mono text-xs text-slate-900">
                                 {log.contract.contractNumber}
                               </span>
                               {log.contractVersion && (
-                                <span className="text-xs text-gray-500 ml-1">
+                                <span className="text-xs text-slate-500 ml-1">
                                   v{log.contractVersion.versionNumber}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-slate-400">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3 max-w-xs">
-                          <span className="text-xs text-gray-600 line-clamp-2">
+                          <span className="text-xs text-slate-600 line-clamp-2">
                             {log.remarks || '—'}
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <button className="text-gray-400 hover:text-gray-600">
+                          <button className="text-slate-400 hover:text-slate-600">
                             {isExpanded ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />}
                           </button>
                         </td>
                       </tr>
                       {isExpanded && (
                         <tr key={`${log._id}-details`}>
-                          <td colSpan={7} className="px-6 py-4 bg-gray-50 border-l-4 border-primary-500">
+                          <td colSpan={7} className="px-6 py-4 bg-slate-50 border-l-4 border-primary-500">
                             {renderLogDetails(log)}
                           </td>
                         </tr>
@@ -699,9 +699,9 @@ const AuditTrail = () => {
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t pt-4">
-              <div className="text-sm text-gray-600">
-                Page {pagination.page} of {pagination.pages} ({pagination.total} total logs)
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t pt-4">
+              <div className="text-sm text-slate-600">
+                Page {pagination.page} of {pagination.pages}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -712,7 +712,7 @@ const AuditTrail = () => {
                   <FiChevronLeft className="h-4 w-4" />
                   Previous
                 </button>
-                <span className="text-sm text-gray-600 px-3">{pagination.page}</span>
+                <span className="text-sm text-slate-600 px-3">{pagination.page}</span>
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                   disabled={pagination.page === pagination.pages}
@@ -732,7 +732,7 @@ const AuditTrail = () => {
         <div className="flex items-start gap-3">
           <FiShield className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="text-sm font-semibold text-amber-800">Append-Only Audit Trail</h4>
+            <h4 className="text-sm font-semibold text-amber-300">Append-Only Audit Trail</h4>
             <p className="text-xs text-amber-700 mt-1">
               These audit logs are immutable. They cannot be edited, modified, or deleted.
               Each entry records the action, user ID, role, timestamp, remarks/metadata, and contract ID + version (if applicable).

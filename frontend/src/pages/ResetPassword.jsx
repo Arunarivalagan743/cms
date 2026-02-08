@@ -45,38 +45,34 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
       <div className="w-full max-w-sm">
         {/* Card */}
         <div 
-          className="relative rounded-lg shadow-2xl overflow-hidden"
-          style={{
-            background: 'linear-gradient(145deg, #a8b5c4 0%, #8a9bb0 50%, #7a8c9e 100%)',
-          }}
+          className="relative rounded-xl shadow-xl overflow-hidden bg-white border border-slate-200"
         >
           {/* Icon Circle */}
           <div className="flex justify-center pt-8 pb-4">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg"
+              className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm"
               style={{
-                background: 'linear-gradient(145deg, #8a9aab 0%, #6b7b8c 100%)',
-                border: '4px solid rgba(255,255,255,0.3)',
+                background: 'linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%)',
+                border: '4px solid #bfdbfe',
               }}
             >
-              <FiLock className="w-10 h-10 text-slate-400/80" />
+              <FiLock className="w-10 h-10 text-primary-600" />
             </div>
           </div>
 
           {/* Title */}
           <h2 
-            className="text-center text-xl font-light tracking-widest mb-2"
-            style={{ color: '#4a5568' }}
+            className="text-center text-xl font-bold tracking-tight mb-2 text-slate-900"
           >
             RESET PASSWORD
           </h2>
-          <p className="text-center text-sm mb-6" style={{ color: '#5a6a7a' }}>
+          <p className="text-center text-sm mb-6 text-slate-500">
             Enter your new password
           </p>
 
@@ -85,15 +81,14 @@ const ResetPassword = () => {
             {/* Password Field */}
             <div className="relative">
               <div 
-                className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center rounded-l"
-                style={{ background: 'rgba(0,0,0,0.1)' }}
+                className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center rounded-l bg-slate-50 border-r border-slate-200"
               >
-                <FiLock className="w-5 h-5 text-slate-500" />
+                <FiLock className="w-5 h-5 text-slate-400" />
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                className="w-full pl-12 pr-12 py-3 bg-white rounded text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                className="w-full pl-12 pr-12 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                 placeholder="New Password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -101,25 +96,24 @@ const ResetPassword = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showPassword ? <FiEyeOff className="h-5 w-5" /> : <FiEye className="h-5 w-5" />}
               </button>
             </div>
-            <p className="text-xs" style={{ color: '#5a6a7a' }}>At least 6 characters</p>
+            <p className="text-xs text-slate-500">At least 6 characters</p>
 
             {/* Confirm Password Field */}
             <div className="relative">
               <div 
-                className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center rounded-l"
-                style={{ background: 'rgba(0,0,0,0.1)' }}
+                className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center rounded-l bg-slate-50 border-r border-slate-200"
               >
-                <FiLock className="w-5 h-5 text-slate-500" />
+                <FiLock className="w-5 h-5 text-slate-400" />
               </div>
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 required
-                className="w-full pl-12 pr-12 py-3 bg-white rounded text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                className="w-full pl-12 pr-12 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -127,7 +121,7 @@ const ResetPassword = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showConfirmPassword ? <FiEyeOff className="h-5 w-5" /> : <FiEye className="h-5 w-5" />}
               </button>

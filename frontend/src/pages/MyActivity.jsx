@@ -90,14 +90,14 @@ const actionConfig = {
   workflow_updated: { icon: FiSettings, color: 'text-indigo-600', label: 'Workflow Updated' },
   workflow_created: { icon: FiSettings, color: 'text-indigo-600', label: 'Workflow Created' },
   workflow_activated: { icon: FiSettings, color: 'text-green-600', label: 'Workflow Activated' },
-  workflow_deactivated: { icon: FiSettings, color: 'text-gray-600', label: 'Workflow Deactivated' },
+  workflow_deactivated: { icon: FiSettings, color: 'text-slate-600', label: 'Workflow Deactivated' },
   permission_updated: { icon: FiShield, color: 'text-purple-600', label: 'Permission Updated' },
   notification_sent: { icon: FiBell, color: 'text-blue-500', label: 'Notification Sent' },
   audit_viewed: { icon: FiEye, color: 'text-slate-500', label: 'Audit Viewed' },
 };
 
 const getActionInfo = (action) => {
-  return actionConfig[action] || { icon: FiActivity, color: 'text-gray-500', label: action };
+  return actionConfig[action] || { icon: FiActivity, color: 'text-slate-500', label: action };
 };
 
 export default function MyActivity() {
@@ -164,16 +164,16 @@ export default function MyActivity() {
   const availableActions = [...new Set(logs.map(l => l.action))].sort();
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
               <FiActivity className="text-indigo-600" />
               My Activity
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-slate-500 text-sm mt-1">
               Your activity log — all actions you&apos;ve performed on the platform
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function MyActivity() {
               className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
                 hasActiveFilters
                   ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
               }`}
             >
               <FiFilter size={14} />
@@ -196,7 +196,7 @@ export default function MyActivity() {
             </button>
             <button
               onClick={() => fetchLogs(pagination.page)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
             >
               <FiRefreshCw size={14} />
               Refresh
@@ -206,34 +206,34 @@ export default function MyActivity() {
 
         {/* Summary */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-white border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-500">Total Activities</p>
-            <p className="text-lg font-semibold text-gray-900">{pagination.total}</p>
+          <div className="bg-white border border-slate-200 rounded-lg p-3">
+            <p className="text-xs text-slate-500">Total Activities</p>
+            <p className="text-lg font-semibold text-slate-900">{pagination.total}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-500">Current Role</p>
+          <div className="bg-white border border-slate-200 rounded-lg p-3">
+            <p className="text-xs text-slate-500">Current Role</p>
             <p className="text-lg font-semibold text-indigo-600 capitalize">{user?.role?.replace('_', ' ') || 'N/A'}</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-500">This Page</p>
-            <p className="text-lg font-semibold text-gray-900">{logs.length} entries</p>
+          <div className="bg-white border border-slate-200 rounded-lg p-3">
+            <p className="text-xs text-slate-500">This Page</p>
+            <p className="text-lg font-semibold text-slate-900">{logs.length} entries</p>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-500">Page</p>
-            <p className="text-lg font-semibold text-gray-900">{pagination.page} / {pagination.totalPages}</p>
+          <div className="bg-white border border-slate-200 rounded-lg p-3">
+            <p className="text-xs text-slate-500">Page</p>
+            <p className="text-lg font-semibold text-slate-900">{pagination.page} / {pagination.totalPages}</p>
           </div>
         </div>
       </div>
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+        <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Search */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Search</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Search</label>
               <div className="relative">
-                <FiSearch className="absolute left-2.5 top-2.5 text-gray-400" size={14} />
+                <FiSearch className="absolute left-2.5 top-2.5 text-slate-400" size={14} />
                 <input
                   type="text"
                   value={filters.search}
@@ -246,7 +246,7 @@ export default function MyActivity() {
 
             {/* Action */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Action</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Action</label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
@@ -263,9 +263,9 @@ export default function MyActivity() {
 
             {/* Start Date */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">From Date</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">From Date</label>
               <div className="relative">
-                <FiCalendar className="absolute left-2.5 top-2.5 text-gray-400" size={14} />
+                <FiCalendar className="absolute left-2.5 top-2.5 text-slate-400" size={14} />
                 <input
                   type="date"
                   value={filters.startDate}
@@ -277,9 +277,9 @@ export default function MyActivity() {
 
             {/* End Date */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">To Date</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">To Date</label>
               <div className="relative">
-                <FiCalendar className="absolute left-2.5 top-2.5 text-gray-400" size={14} />
+                <FiCalendar className="absolute left-2.5 top-2.5 text-slate-400" size={14} />
                 <input
                   type="date"
                   value={filters.endDate}
@@ -313,17 +313,17 @@ export default function MyActivity() {
           description={hasActiveFilters ? 'Try adjusting your filters' : 'Your activity will appear here as you use the platform'}
         />
       ) : (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600 w-8"></th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Action</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Contract</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Role</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Timestamp</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Remarks</th>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="text-left px-4 py-3 font-medium text-slate-600 w-8"></th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Action</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Contract</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Role</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Timestamp</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -335,52 +335,52 @@ export default function MyActivity() {
                   return (
                     <React.Fragment key={log._id}>
                       <tr
-                        className={`border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors ${
                           isExpanded ? 'bg-indigo-50/50' : ''
                         }`}
                         onClick={() => setExpandedRow(isExpanded ? null : log._id)}
                       >
                         <td className="px-4 py-3">
                           {isExpanded ? (
-                            <FiChevronUp size={14} className="text-gray-400" />
+                            <FiChevronUp size={14} className="text-slate-400" />
                           ) : (
-                            <FiChevronDown size={14} className="text-gray-400" />
+                            <FiChevronDown size={14} className="text-slate-400" />
                           )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <ActionIcon className={actionInfo.color} size={16} />
-                            <span className="font-medium text-gray-900">{actionInfo.label}</span>
+                            <span className="font-medium text-slate-900">{actionInfo.label}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           {log.contract ? (
                             <div className="flex items-center gap-1">
-                              <FiFileText className="text-gray-400" size={13} />
-                              <span className="text-gray-700 text-xs">
+                              <FiFileText className="text-slate-400" size={13} />
+                              <span className="text-slate-700 text-xs">
                                 {log.contract?.contractNumber || log.contract?._id?.substring(0, 8) || '—'}
                               </span>
                               {log.contractVersion && (
-                                <span className="text-xs text-gray-400 ml-1">v{log.contractVersion?.versionNumber || log.contractVersion}</span>
+                                <span className="text-xs text-slate-400 ml-1">v{log.contractVersion?.versionNumber || log.contractVersion}</span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-xs">—</span>
+                            <span className="text-slate-400 text-xs">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 capitalize">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 capitalize">
                             {log.roleAtTime?.replace('_', ' ') || '—'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1 text-gray-500 text-xs">
+                          <div className="flex items-center gap-1 text-slate-500 text-xs">
                             <FiClock size={12} />
                             {formatDate(log.createdAt)}
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-gray-600 text-xs truncate block max-w-[200px]">
+                          <span className="text-slate-600 text-xs truncate block max-w-[200px]">
                             {log.remarks || '—'}
                           </span>
                         </td>
@@ -392,20 +392,20 @@ export default function MyActivity() {
                           <td colSpan={6} className="px-6 py-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                               <div>
-                                <p className="text-gray-500 font-medium mb-1">Action Details</p>
-                                <p className="text-gray-800">{actionInfo.label}</p>
-                                <p className="text-gray-400 font-mono mt-0.5">{log.action}</p>
+                                <p className="text-slate-500 font-medium mb-1">Action Details</p>
+                                <p className="text-slate-800">{actionInfo.label}</p>
+                                <p className="text-slate-400 font-mono mt-0.5">{log.action}</p>
                               </div>
 
                               {log.contract && (
                                 <div>
-                                  <p className="text-gray-500 font-medium mb-1">Contract Info</p>
-                                  <p className="text-gray-800">{log.contract?.contractNumber || 'N/A'}</p>
+                                  <p className="text-slate-500 font-medium mb-1">Contract Info</p>
+                                  <p className="text-slate-800">{log.contract?.contractNumber || 'N/A'}</p>
                                   {log.contractVersion && (
-                                    <p className="text-gray-500 mt-0.5">Version: {log.contractVersion?.versionNumber || '—'}</p>
+                                    <p className="text-slate-500 mt-0.5">Version: {log.contractVersion?.versionNumber || '—'}</p>
                                   )}
                                   {log.contractVersion?.contractName && (
-                                    <p className="text-gray-500 mt-0.5">Name: {log.contractVersion.contractName}</p>
+                                    <p className="text-slate-500 mt-0.5">Name: {log.contractVersion.contractName}</p>
                                   )}
                                   {log.contractVersion?.status && (
                                     <div className="mt-1"><StatusBadge status={log.contractVersion.status} /></div>
@@ -415,15 +415,15 @@ export default function MyActivity() {
 
                               {log.remarks && (
                                 <div>
-                                  <p className="text-gray-500 font-medium mb-1">Remarks</p>
-                                  <p className="text-gray-800">{log.remarks}</p>
+                                  <p className="text-slate-500 font-medium mb-1">Remarks</p>
+                                  <p className="text-slate-800">{log.remarks}</p>
                                 </div>
                               )}
 
                               {log.metadata && Object.keys(log.metadata).length > 0 && (
                                 <div className="sm:col-span-2 lg:col-span-3">
-                                  <p className="text-gray-500 font-medium mb-1">Metadata</p>
-                                  <pre className="bg-white border border-gray-200 rounded p-2 text-xs text-gray-700 overflow-x-auto">
+                                  <p className="text-slate-500 font-medium mb-1">Metadata</p>
+                                  <pre className="bg-white border border-slate-200 rounded p-2 text-xs text-slate-700 overflow-x-auto">
                                     {JSON.stringify(log.metadata, null, 2)}
                                   </pre>
                                 </div>
@@ -431,14 +431,14 @@ export default function MyActivity() {
 
                               {log.ipAddress && (
                                 <div>
-                                  <p className="text-gray-500 font-medium mb-1">IP Address</p>
-                                  <p className="text-gray-800 font-mono">{log.ipAddress}</p>
+                                  <p className="text-slate-500 font-medium mb-1">IP Address</p>
+                                  <p className="text-slate-800 font-mono">{log.ipAddress}</p>
                                 </div>
                               )}
 
                               {log.success !== undefined && (
                                 <div>
-                                  <p className="text-gray-500 font-medium mb-1">Success</p>
+                                  <p className="text-slate-500 font-medium mb-1">Success</p>
                                   <StatusBadge status={log.success ? 'active' : 'failed'} />
                                 </div>
                               )}
@@ -455,15 +455,15 @@ export default function MyActivity() {
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-              <p className="text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50">
+              <p className="text-xs text-slate-500">
                 Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
               </p>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={pagination.page <= 1}
-                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="p-1.5 rounded hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <FiChevronLeft size={16} />
                 </button>
@@ -485,7 +485,7 @@ export default function MyActivity() {
                       className={`w-8 h-8 rounded text-xs font-medium ${
                         pagination.page === pageNum
                           ? 'bg-indigo-600 text-white'
-                          : 'hover:bg-gray-200 text-gray-700'
+                          : 'hover:bg-slate-200 text-slate-700'
                       }`}
                     >
                       {pageNum}
@@ -495,7 +495,7 @@ export default function MyActivity() {
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={pagination.page >= pagination.totalPages}
-                  className="p-1.5 rounded hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="p-1.5 rounded hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <FiChevronRight size={16} />
                 </button>

@@ -154,19 +154,19 @@ const ContractList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-800">
+          <h2 className="text-lg sm:text-2xl font-semibold text-slate-900 tracking-tight">
             Contracts
           </h2>
           {workflowFilter && (
-            <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
-              <FiFilter className="h-3 w-3" />
+            <p className="text-sm text-slate-400 mt-1.5 flex items-center gap-2 leading-relaxed">
+              <FiFilter className="h-3 w-3" aria-hidden="true" />
               Filtered by workflow
               <button
                 onClick={() => {
                   setWorkflowFilter('');
                   setSearchParams({});
                 }}
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-blue-600 hover:text-blue-600 underline"
               >
                 Clear
               </button>
@@ -195,7 +195,7 @@ const ContractList = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 h-5 w-5" />
             <input
               type="text"
               placeholder="Search by name, number, or client..."
@@ -341,7 +341,7 @@ const ContractList = () => {
             </div>
           </div>
           <div className="mt-4 flex justify-between items-center">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               Showing {filteredContracts.length} of {contracts.length} contracts
             </p>
             <button onClick={clearFilters} className="btn-secondary flex items-center gap-2">
@@ -412,14 +412,14 @@ const ContractList = () => {
                 {filteredContracts.map((contract) => (
                   <tr 
                     key={contract._id} 
-                    className="hover:bg-slate-50 transition-colors"
+                    className="hover:bg-white transition-colors"
                   >
                     <td className="px-4 py-4">
                       <div>
-                        <p className="text-sm font-medium text-slate-800">
+                        <p className="text-sm font-medium text-slate-900">
                           {contract.contractName}
                         </p>
-                        <p className="text-xs text-slate-400">{contract.contractNumber}</p>
+                        <p className="text-xs text-slate-500">{contract.contractNumber}</p>
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -427,7 +427,7 @@ const ContractList = () => {
                         <p className="text-sm text-slate-700 font-medium">
                           {contract.client?.name || 'N/A'}
                         </p>
-                        <p className="text-xs text-slate-400 flex items-center gap-1">
+                        <p className="text-xs text-slate-500 flex items-center gap-1">
                           <FiMail className="h-3 w-3" />
                           {contract.client?.email || 'N/A'}
                         </p>
@@ -438,8 +438,8 @@ const ContractList = () => {
                         <div className="flex items-center">
                           <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-medium ${
                             contract.workflow?.name?.includes('Direct Client') 
-                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                              : 'bg-blue-50 text-blue-700 border border-blue-200'
+                              ? 'bg-purple-50 text-purple-600 border border-purple-200'
+                              : 'bg-blue-50 text-blue-600 border border-blue-200'
                           }`}>
                             {contract.workflow?.name || 'N/A'}
                           </span>
@@ -450,7 +450,7 @@ const ContractList = () => {
                       <div className="flex items-center gap-1">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
                           contract.versionNumber > 1 
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                            ? 'bg-blue-50 text-blue-600 border border-blue-200' 
                             : 'bg-slate-100 text-slate-600 border border-slate-200'
                         }`}>
                           {contract.versionNumber > 1 && <FiRefreshCw className="h-3 w-3 mr-1" />}
@@ -459,7 +459,7 @@ const ContractList = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-sm font-semibold text-slate-800">
+                      <span className="text-sm font-semibold text-slate-900">
                         {formatCurrency(contract.amount)}
                       </span>
                     </td>
@@ -469,7 +469,7 @@ const ContractList = () => {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="text-sm text-slate-500">
+                      <span className="text-sm text-slate-400">
                         {formatDate(contract.createdAt)}
                       </span>
                     </td>

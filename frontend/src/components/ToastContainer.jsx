@@ -27,9 +27,9 @@ const ToastContainer = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map((toast, index) => (
-        <div key={toast.id} style={{ marginTop: `${index * 4}rem` }}>
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 flex flex-col gap-2 items-end">
+      {toasts.map((toast) => (
+        <div key={toast.id}>
           <Toast
             message={toast.message}
             type={toast.type}

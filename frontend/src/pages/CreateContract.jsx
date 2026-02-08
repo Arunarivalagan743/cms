@@ -187,7 +187,7 @@ const CreateContract = () => {
             <FiArrowLeft className="h-5 w-5" />
             Back
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">Create New Contract</h2>
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900">Create New Contract</h2>
         </div>
       </div>
 
@@ -328,7 +328,7 @@ const CreateContract = () => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
             <Button
               variant="secondary"
               onClick={() => navigate('/contracts')}
@@ -357,10 +357,10 @@ const CreateContract = () => {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-blue-900 mb-1">
+            <h3 className="text-sm font-semibold text-blue-300 mb-1">
               Contract Creation Guidelines
             </h3>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <ul className="text-sm text-blue-200 space-y-1">
               <li>• The contract will be created in <strong>Draft</strong> status</li>
               <li>• You can edit draft contracts before submitting for review</li>
               {workflows.length > 1 ? (

@@ -99,7 +99,7 @@ const NotificationBell = () => {
       case 'amendment':
         return <FiAlertCircle className="h-5 w-5 text-yellow-600" />;
       default:
-        return <FiBell className="h-5 w-5 text-gray-600" />;
+        return <FiBell className="h-5 w-5 text-slate-600" />;
     }
   };
 
@@ -120,7 +120,7 @@ const NotificationBell = () => {
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden animate-fade-in">
+        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden animate-fade-in">
           {/* Header */}
           <div className="px-4 py-3 flex items-center justify-between bg-slate-50 border-b border-slate-200">
             <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>

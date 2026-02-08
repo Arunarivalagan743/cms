@@ -346,6 +346,28 @@ exports.updatePermissions = async (req, res, next) => {
     const { role } = req.params;
     const { permissions, description } = req.body;
 
+    // Super Admin cannot have contract operation permissions (read-only + admin controls only)
+    const SUPER_ADMIN_BLOCKED = [
+      'canCreateContract',
+      'canEditDraft',
+      'canEditSubmitted',
+      'canDeleteContract',
+      'canSubmitContract',
+      'canApproveContract',
+      'canRejectContract',
+      'canAmendContract',
+    ];
+
+    let sanitizedPermissions = permissions;
+    if (role === 'super_admin' && permissions) {
+      sanitizedPermissions = { ...permissions };
+      for (const key of SUPER_ADMIN_BLOCKED) {
+        if (key in sanitizedPermissions) {
+          sanitizedPermissions[key] = false;
+        }
+      }
+    }
+
     let rolePermission = await RolePermission.findOne({ role });
 
     const oldPermissions = rolePermission ? { ...rolePermission.permissions.toObject() } : null;
@@ -354,8 +376,8 @@ exports.updatePermissions = async (req, res, next) => {
       rolePermission = new RolePermission({ role });
     }
 
-    if (permissions) {
-      rolePermission.permissions = { ...rolePermission.permissions.toObject(), ...permissions };
+    if (sanitizedPermissions) {
+      rolePermission.permissions = { ...rolePermission.permissions.toObject(), ...sanitizedPermissions };
     }
     if (description !== undefined) {
       rolePermission.description = description;
@@ -367,7 +389,7 @@ exports.updatePermissions = async (req, res, next) => {
     // Find changed permissions
     const changedPermissions = [];
     if (oldPermissions) {
-      for (const [key, value] of Object.entries(permissions || {})) {
+      for (const [key, value] of Object.entries(sanitizedPermissions || {})) {
         if (oldPermissions[key] !== value) {
           changedPermissions.push({
             permission: key,

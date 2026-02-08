@@ -35,14 +35,19 @@ const Toast = ({ message, type = 'info', onClose, duration = 3000 }) => {
   };
 
   return (
-    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded shadow-lg animate-slide-in ${styles[type] || styles.info}`}>
-      {icons[type]}
-      <p className="text-sm font-medium">{message}</p>
-      <button 
-        onClick={onClose} 
+    <div
+      className={`flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg animate-slide-in max-w-[calc(100vw-2rem)] ${styles[type] || styles.info}`}
+      role="alert"
+      aria-live="polite"
+    >
+      <span aria-hidden="true">{icons[type]}</span>
+      <p className="text-sm font-medium leading-5">{message}</p>
+      <button
+        onClick={onClose}
         className="ml-1 p-1 rounded hover:bg-black/10 transition-colors"
+        aria-label="Dismiss notification"
       >
-        <FiX className="h-3.5 w-3.5" />
+        <FiX className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </div>
   );

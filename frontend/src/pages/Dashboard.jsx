@@ -168,12 +168,12 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-800">
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
             {getGreeting()}, {user?.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Here's what's happening with your contracts today</p>
+          <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">Here's what's happening with your contracts today</p>
         </div>
         {isLegal && (
           <Button as={Link} to="/contracts/new" iconLeading={<FiPlus />}>
@@ -188,14 +188,14 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Total Contracts - For all roles except Finance */}
         {!isFinance && (
           <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('total')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Total Contracts</p>
-                <p className="text-2xl font-semibold text-slate-800 mt-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Contracts</p>
+                <p className="text-2xl font-bold text-slate-800 mt-1.5 tabular-nums">
                   {stats?.totalContracts || 0}
                 </p>
               </div>
@@ -209,8 +209,8 @@ const Dashboard = () => {
           <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('pending')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Pending My Review</p>
-                <p className="text-2xl font-semibold text-amber-600 mt-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Pending My Review</p>
+                <p className="text-2xl font-bold text-amber-600 mt-1.5 tabular-nums">
                   {stats?.pendingReview || 0}
                 </p>
               </div>
@@ -223,8 +223,8 @@ const Dashboard = () => {
         <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('active')}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">Active Contracts</p>
-              <p className="text-2xl font-semibold text-emerald-600 mt-1">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active Contracts</p>
+              <p className="text-2xl font-bold text-emerald-600 mt-1.5 tabular-nums">
                 {stats?.activeContracts || stats?.totalActive || 0}
               </p>
             </div>
@@ -237,11 +237,11 @@ const Dashboard = () => {
           <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('pending')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                   {isClient ? 'Pending My Approval' : 'Pending Reviews'}
                 </p>
-                <p className="text-2xl font-semibold text-amber-600 mt-1">
-                  {stats?.pendingContracts || stats?.pendingApproval || 0}
+                <p className="text-2xl font-bold text-amber-600 mt-1.5 tabular-nums">
+                  {stats?.pendingContracts || stats?.pendingApproval || stats?.totalPending || 0}
                 </p>
               </div>
               <FiClock className="h-5 w-5 text-amber-600" />
@@ -254,8 +254,8 @@ const Dashboard = () => {
           <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('draft')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Draft Contracts</p>
-                <p className="text-2xl font-semibold text-slate-600 mt-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Draft Contracts</p>
+                <p className="text-2xl font-bold text-slate-600 mt-1.5 tabular-nums">
                   {stats?.draftContracts || 0}
                 </p>
               </div>
@@ -269,8 +269,8 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Approved By Me</p>
-                <p className="text-2xl font-semibold text-blue-600 mt-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Approved By Me</p>
+                <p className="text-2xl font-bold text-blue-600 mt-1.5 tabular-nums">
                   {stats?.approvedByMe || 0}
                 </p>
               </div>
@@ -284,10 +284,10 @@ const Dashboard = () => {
           <div className="stat-card border-l-4 border-l-indigo-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                   My Previous Work (as {stats.previousRoleStats.previousRole})
                 </p>
-                <p className="text-2xl font-semibold text-indigo-600 mt-1">
+                <p className="text-2xl font-bold text-indigo-600 mt-1.5 tabular-nums">
                   {stats.previousRoleStats.contractsCreated || 0}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -304,8 +304,8 @@ const Dashboard = () => {
           <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('users')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Total Users</p>
-                <p className="text-2xl font-semibold text-violet-600 mt-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Users</p>
+                <p className="text-2xl font-bold text-violet-600 mt-1.5 tabular-nums">
                   {stats?.totalUsers || 0}
                 </p>
               </div>
@@ -318,9 +318,9 @@ const Dashboard = () => {
         <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('rejected')}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">Rejected Contracts</p>
-              <p className="text-2xl font-semibold text-red-600 mt-1">
-                {stats?.rejectedContracts || 0}
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Rejected Contracts</p>
+              <p className="text-2xl font-bold text-red-600 mt-1.5 tabular-nums">
+                {stats?.rejectedContracts || stats?.totalRejected || 0}
               </p>
             </div>
             <FiXCircle className="h-5 w-5 text-red-600" />
@@ -332,8 +332,8 @@ const Dashboard = () => {
           <div className="stat-card cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200" onClick={() => openModal('amended')}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Amended Contracts</p>
-                <p className="text-2xl font-semibold text-amber-600 mt-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Amended Contracts</p>
+                <p className="text-2xl font-bold text-amber-600 mt-1.5 tabular-nums">
                   {stats?.amendedContracts || 0}
                 </p>
               </div>
@@ -346,17 +346,17 @@ const Dashboard = () => {
       {/* Workflow Statistics - For Finance, Legal, and Super Admin */}
       {!isClient && stats?.workflowStats && stats.workflowStats.length > 0 && (
         <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-semibold text-slate-800 tracking-tight flex items-center gap-2.5">
               <FiArrowRight className="h-5 w-5 text-blue-600" />
               Contracts by Workflow
             </h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.workflowStats.map((workflow, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer"
                 onClick={() => {
                   if (workflow.workflowId) {
                     navigate(`/contracts?workflow=${workflow.workflowId}`);
@@ -400,17 +400,17 @@ const Dashboard = () => {
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fadeIn"
+              className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity animate-fadeIn"
               onClick={closeModal}
             ></div>
 
             {/* Modal */}
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full animate-slideUp">
+            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle w-full max-w-6xl animate-slideUp">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-primary-50 to-primary-100">
-                <h3 className="text-xl font-bold text-slate-800">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 bg-gradient-to-r from-primary-50 to-primary-100">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-800">
                   {modalData.title}
-                  <span className="ml-3 text-sm font-normal text-slate-600">({modalData.items.length} {modalData.type === 'users' ? 'users' : 'items'})</span>
+                  <span className="ml-2 sm:ml-3 text-sm font-normal text-slate-600">({modalData.items.length} {modalData.type === 'users' ? 'users' : 'items'})</span>
                 </h3>
                 <button
                   onClick={closeModal}
@@ -679,7 +679,7 @@ const Dashboard = () => {
                               <h4 className="font-semibold text-slate-800 text-lg">{contract.contractName || contract.contractNumber}</h4>
                               <StatusBadge status={contract.status} />
                             </div>
-                            <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                               <div>
                                 <span className="text-slate-500">Contract #:</span>
                                 <span className="ml-2 font-medium text-slate-700">{contract.contractNumber}</span>
@@ -739,10 +739,10 @@ const Dashboard = () => {
 
       {/* ===== SECTION 1: PENDING APPROVALS ===== */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <FiClock className="h-5 w-5 text-amber-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Pending Approvals</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Pending Approvals</h3>
             <span className="text-sm font-medium text-amber-600">
               {pendingApprovals.length}
             </span>
@@ -757,45 +757,45 @@ const Dashboard = () => {
 
         {pendingApprovals.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contract</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Effective Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Contract</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Effective Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Submitted</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {pendingApprovals.slice(0, 5).map((contract, idx) => (
-                  <tr key={contract.contractId || contract._id || `pending-${idx}`} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/contracts/${contract.contractId}`)}>
+                  <tr key={contract.contractId || contract._id || `pending-${idx}`} className="hover:bg-slate-50 cursor-pointer transition-colors" onClick={() => navigate(`/contracts/${contract.contractId}`)}>
                     <td className="px-4 py-4">
                       <Link to={`/contracts/${contract.contractId}`} className="text-primary-600 hover:text-primary-700 font-medium" onClick={(e) => e.stopPropagation()}>
                         {contract.contractName || contract.contractNumber}
                       </Link>
-                      <p className="text-xs text-gray-500">{contract.contractNumber}</p>
-                      <p className="text-xs text-gray-400 mt-1">Version {contract.versionNumber || 1}</p>
+                      <p className="text-xs text-slate-500">{contract.contractNumber}</p>
+                      <p className="text-xs text-slate-500 mt-1">Version {contract.versionNumber || 1}</p>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900 font-medium">{contract.client?.name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500">{contract.client?.email || 'N/A'}</div>
+                      <div className="text-sm text-slate-800 font-medium">{contract.client?.name || 'N/A'}</div>
+                      <div className="text-xs text-slate-500">{contract.client?.email || 'N/A'}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm font-semibold text-gray-900">{contract.amount ? formatCurrency(contract.amount) : <span className="text-slate-400 italic">Not set</span>}</div>
+                      <div className="text-sm font-semibold text-slate-800">{contract.amount ? formatCurrency(contract.amount) : <span className="text-slate-400 italic">Not set</span>}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900">{contract.effectiveDate ? formatDate(contract.effectiveDate) : <span className="text-slate-400 italic">Not set</span>}</div>
+                      <div className="text-sm text-slate-700">{contract.effectiveDate ? formatDate(contract.effectiveDate) : <span className="text-slate-400 italic">Not set</span>}</div>
                     </td>
                     <td className="px-4 py-4">
                       <StatusBadge status={contract.status} />
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-600">{formatDate(contract.submittedAt || contract.updatedAt)}</div>
+                      <div className="text-sm text-slate-400">{formatDate(contract.submittedAt || contract.updatedAt)}</div>
                       {contract.createdBy && (
-                        <div className="text-xs text-gray-400">by {contract.createdBy.name}</div>
+                        <div className="text-xs text-slate-500">by {contract.createdBy.name}</div>
                       )}
                     </td>
                     <td className="px-4 py-4">
@@ -815,10 +815,10 @@ const Dashboard = () => {
 
       {/* ===== SECTION 2: ACTIVE CONTRACTS ===== */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <FiCheckCircle className="h-5 w-5 text-emerald-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Active Contracts</h3>
+            <h3 className="text-lg font-semibold text-slate-800">Active Contracts</h3>
             <span className="text-sm font-medium text-emerald-600">
               {activeContracts.length}
             </span>
@@ -833,53 +833,53 @@ const Dashboard = () => {
 
         {activeContracts.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contract</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Effective Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activated</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approvers</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Contract</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Effective Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Activated</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Approvers</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {activeContracts.slice(0, 5).map((contract, idx) => (
-                  <tr key={contract.contractId || contract._id || `active-${idx}`} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/contracts/${contract.contractId}`)}>
+                  <tr key={contract.contractId || contract._id || `active-${idx}`} className="hover:bg-slate-50 cursor-pointer transition-colors" onClick={() => navigate(`/contracts/${contract.contractId}`)}>
                     <td className="px-4 py-4">
                       <Link to={`/contracts/${contract.contractId}`} className="text-primary-600 hover:text-primary-700 font-medium" onClick={(e) => e.stopPropagation()}>
                         {contract.contractName || contract.contractNumber}
                       </Link>
-                      <p className="text-xs text-gray-500">{contract.contractNumber}</p>
-                      <p className="text-xs text-gray-400 mt-1">Version {contract.versionNumber || 1}</p>
+                      <p className="text-xs text-slate-500">{contract.contractNumber}</p>
+                      <p className="text-xs text-slate-500 mt-1">Version {contract.versionNumber || 1}</p>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900 font-medium">{contract.client?.name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500">{contract.client?.email || 'N/A'}</div>
+                      <div className="text-sm text-slate-800 font-medium">{contract.client?.name || 'N/A'}</div>
+                      <div className="text-xs text-slate-500">{contract.client?.email || 'N/A'}</div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="text-sm font-semibold text-emerald-700">{contract.amount ? formatCurrency(contract.amount) : <span className="text-slate-400 italic">Not set</span>}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900">{contract.effectiveDate ? formatDate(contract.effectiveDate) : <span className="text-slate-400 italic">Not set</span>}</div>
+                      <div className="text-sm text-slate-700">{contract.effectiveDate ? formatDate(contract.effectiveDate) : <span className="text-slate-400 italic">Not set</span>}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-600">{contract.activatedAt ? formatDate(contract.activatedAt) : <span className="text-slate-400 italic">Not activated</span>}</div>
+                      <div className="text-sm text-slate-400">{contract.activatedAt ? formatDate(contract.activatedAt) : <span className="text-slate-400 italic">Not activated</span>}</div>
                       {contract.createdBy && (
-                        <div className="text-xs text-gray-400">by {contract.createdBy.name}</div>
+                        <div className="text-xs text-slate-500">by {contract.createdBy.name}</div>
                       )}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-1">
                         {contract.approvedByFinance && (
-                          <div className="text-xs text-gray-600">
-                            <span className="text-gray-400">Finance:</span> {contract.approvedByFinance.name}
+                          <div className="text-xs text-slate-400">
+                            <span className="text-slate-500">Finance:</span> {contract.approvedByFinance.name}
                           </div>
                         )}
                         {contract.approvedByClient && (
-                          <div className="text-xs text-gray-600">
-                            <span className="text-gray-400">Client:</span> {contract.approvedByClient.name}
+                          <div className="text-xs text-slate-400">
+                            <span className="text-slate-500">Client:</span> {contract.approvedByClient.name}
                           </div>
                         )}
                       </div>
@@ -896,10 +896,10 @@ const Dashboard = () => {
 
       {/* Rejected Contracts */}
       <div className="card">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <div className="flex items-center gap-3">
             <FiXCircle className="h-5 w-5 text-red-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Rejected Contracts</h3>
+            <h3 className="text-lg font-semibold text-slate-800">Rejected Contracts</h3>
             <span className="text-sm font-medium text-red-600">
               {rejectedContracts.length}
             </span>
@@ -914,38 +914,38 @@ const Dashboard = () => {
 
         {rejectedContracts.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contract</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rejected By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Contract</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rejected By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Remarks</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {rejectedContracts.slice(0, 5).map((contract, idx) => (
-                  <tr key={contract.contractId || contract._id || `rejected-${idx}`} className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/contracts/${contract.contractId}`)}>
+                  <tr key={contract.contractId || contract._id || `rejected-${idx}`} className="hover:bg-slate-50 cursor-pointer transition-colors" onClick={() => navigate(`/contracts/${contract.contractId}`)}>
                     <td className="px-4 py-4">
                       <Link to={`/contracts/${contract.contractId}`} className="text-primary-600 hover:text-primary-700 font-medium" onClick={(e) => e.stopPropagation()}>
                         {contract.contractName || contract.contractNumber}
                       </Link>
-                      <p className="text-xs text-gray-500">{contract.contractNumber}</p>
-                      <p className="text-xs text-gray-400 mt-1">Version {contract.versionNumber || 1}</p>
+                      <p className="text-xs text-slate-500">{contract.contractNumber}</p>
+                      <p className="text-xs text-slate-500 mt-1">Version {contract.versionNumber || 1}</p>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900 font-medium">{contract.client?.name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500">{contract.client?.email || 'N/A'}</div>
+                      <div className="text-sm text-slate-800 font-medium">{contract.client?.name || 'N/A'}</div>
+                      <div className="text-xs text-slate-500">{contract.client?.email || 'N/A'}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm font-semibold text-gray-900">{contract.amount ? formatCurrency(contract.amount) : <span className="text-slate-400 italic">Not set</span>}</div>
+                      <div className="text-sm font-semibold text-slate-800">{contract.amount ? formatCurrency(contract.amount) : <span className="text-slate-400 italic">Not set</span>}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900 font-medium">{contract.rejectedBy?.name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500 capitalize">{contract.rejectedBy?.role || 'N/A'}</div>
+                      <div className="text-sm text-slate-800 font-medium">{contract.rejectedBy?.name || 'N/A'}</div>
+                      <div className="text-xs text-slate-500 capitalize">{contract.rejectedBy?.role || 'N/A'}</div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="max-w-xs">
@@ -962,9 +962,9 @@ const Dashboard = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-gray-600">{formatDate(contract.rejectedAt)}</div>
+                      <div className="text-sm text-slate-400">{formatDate(contract.rejectedAt)}</div>
                       {contract.createdBy && (
-                        <div className="text-xs text-gray-400">by {contract.createdBy.name}</div>
+                        <div className="text-xs text-slate-500">by {contract.createdBy.name}</div>
                       )}
                     </td>
                     <td className="px-4 py-4">
@@ -991,8 +991,8 @@ const Dashboard = () => {
 
       {/* Recent Contracts or Recent Users */}
       <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <h3 className="text-lg font-semibold text-slate-800">
             {isSuperAdmin ? 'Recent Users' : 'Recent Contracts'}
           </h3>
           <Link
@@ -1006,29 +1006,29 @@ const Dashboard = () => {
         {/* Recent Contracts Table */}
         {!isSuperAdmin && recentItems && recentItems.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Contract
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Date
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {recentItems.map((contract) => (
-                  <tr key={contract.contractId || contract._id} className="hover:bg-gray-50">
+                  <tr key={contract.contractId || contract._id} className="hover:bg-slate-50">
                     <td className="px-4 py-4">
                       <Link
                         to={`/contracts/${contract.contractId || contract._id}`}
@@ -1036,20 +1036,20 @@ const Dashboard = () => {
                       >
                         {contract.contractName || contract.contractNumber || 'N/A'}
                       </Link>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-slate-500 mt-1">
                         {contract.contractNumber} • v{contract.versionNumber || 1}
                       </p>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm text-slate-700">
                       {contract.client?.name || 'N/A'}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-900">
+                    <td className="px-4 py-4 text-sm text-slate-800 font-medium">
                       {contract.amount ? formatCurrency(contract.amount) : <span className="text-slate-400 italic">Not set</span>}
                     </td>
                     <td className="px-4 py-4">
                       <StatusBadge status={contract.status} />
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">
+                    <td className="px-4 py-4 text-sm text-slate-400">
                       {formatDate(contract.createdAt)}
                     </td>
                   </tr>
@@ -1070,48 +1070,38 @@ const Dashboard = () => {
         {/* Recent Users Table */}
         {isSuperAdmin && recentItems && recentItems.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Joined
-                  </th>
+                  <th className="table-header">Name</th>
+                  <th className="table-header">Email</th>
+                  <th className="table-header">Role</th>
+                  <th className="table-header">Status</th>
+                  <th className="table-header">Joined</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {recentItems.map((usr) => (
-                  <tr key={usr._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                  <tr key={usr._id} className="table-row">
+                    <td className="px-4 py-3.5 text-sm font-medium text-slate-800">
                       {usr.name}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{usr.email}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3.5 text-sm text-slate-500">{usr.email}</td>
+                    <td className="px-4 py-3.5">
                       <RoleBadge role={usr.role} />
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3.5">
                       <span
                         className={`badge ${
                           usr.isActive && usr.isPasswordSet
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200'
+                            : 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200'
                         }`}
                       >
                         {usr.isActive && usr.isPasswordSet ? 'Active' : 'Pending'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">
+                    <td className="px-4 py-3.5 text-sm text-slate-500">
                       {formatDate(usr.createdAt)}
                     </td>
                   </tr>

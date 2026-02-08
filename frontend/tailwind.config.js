@@ -7,7 +7,18 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: ['"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+      },
+      fontSize: {
+        // Refined type scale with optimal line-heights and letter-spacing
+        'xs':   ['0.75rem',   { lineHeight: '1.125rem', letterSpacing: '0.01em' }],   // 12px / 18px
+        'sm':   ['0.8125rem', { lineHeight: '1.25rem',  letterSpacing: '0.005em' }],  // 13px / 20px
+        'base': ['0.875rem',  { lineHeight: '1.375rem', letterSpacing: '0em' }],       // 14px / 22px
+        'lg':   ['1rem',      { lineHeight: '1.5rem',   letterSpacing: '-0.01em' }],   // 16px / 24px
+        'xl':   ['1.125rem',  { lineHeight: '1.625rem', letterSpacing: '-0.01em' }],   // 18px / 26px
+        '2xl':  ['1.25rem',   { lineHeight: '1.75rem',  letterSpacing: '-0.015em' }],  // 20px / 28px
+        '3xl':  ['1.5rem',    { lineHeight: '2rem',     letterSpacing: '-0.02em' }],   // 24px / 32px
+        '4xl':  ['1.875rem',  { lineHeight: '2.25rem',  letterSpacing: '-0.025em' }],  // 30px / 36px
       },
       colors: {
         primary: {
@@ -28,6 +39,15 @@ export default {
         'DEFAULT': '0.375rem',
         'md': '0.5rem',
         'lg': '0.625rem',
+        'xl': '0.75rem',
+        '2xl': '1rem',
+      },
+      spacing: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem',
+        '13': '3.25rem',
+        '15': '3.75rem',
+        '18': '4.5rem',
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',

@@ -63,7 +63,7 @@ const Notifications = () => {
       case 'amendment':
         return <FiAlertCircle className="h-6 w-6 text-yellow-600" />;
       default:
-        return <FiBell className="h-6 w-6 text-gray-600" />;
+        return <FiBell className="h-6 w-6 text-slate-600" />;
     }
   };
 
@@ -79,8 +79,8 @@ const Notifications = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-slate-800">Notifications</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Notifications</h2>
         {notifications.some((n) => !n.isRead) && (
           <button onClick={handleMarkAllAsRead} className="btn-secondary">
             Mark all as read
@@ -93,20 +93,20 @@ const Notifications = () => {
         <div className="flex gap-4">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'all'
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             All
           </button>
           <button
             onClick={() => setFilter('unread')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'unread'
                 ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             Unread
@@ -142,13 +142,13 @@ const Notifications = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="text-base font-semibold text-gray-900">
+                      <h4 className="text-base font-semibold text-slate-900">
                         {notification.title}
                       </h4>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-slate-600 mt-1">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-slate-500 mt-2">
                         {formatTimeAgo(notification.createdAt)}
                       </p>
                     </div>

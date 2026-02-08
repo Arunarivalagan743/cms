@@ -230,7 +230,7 @@ const UserManagement = () => {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
+        <h2 className="text-lg sm:text-2xl font-bold text-slate-900">User Management</h2>
         <button
           onClick={() => setShowCreateModal(true)}
           className="btn-primary flex items-center gap-2 justify-center"
@@ -245,7 +245,7 @@ const UserManagement = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search by name or email..."
@@ -290,44 +290,44 @@ const UserManagement = () => {
       ) : (
         <div className="card">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-200">
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                  <tr key={user._id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4 text-sm font-medium text-slate-900">
                       {user.name}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{user.email}</td>
+                    <td className="px-4 py-4 text-sm text-slate-600">{user.email}</td>
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-1">
                         <RoleBadge role={user.role} />
                         {user.previousRoles && user.previousRoles.length > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-1 text-xs text-slate-500">
                             <span>Previously:</span>
                             {user.previousRoles.slice(-2).map((pr, idx) => (
-                              <span key={idx} className="px-1 py-0.5 bg-gray-100 rounded text-gray-600">
+                              <span key={idx} className="px-1 py-0.5 bg-slate-100 rounded text-slate-600">
                                 {pr.role}
                               </span>
                             ))}
@@ -346,7 +346,7 @@ const UserManagement = () => {
                         {user.isPasswordSet ? 'Active' : 'Pending'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">
+                    <td className="px-4 py-4 text-sm text-slate-600">
                       {formatDate(user.createdAt)}
                     </td>
                     <td className="px-4 py-4">
@@ -441,11 +441,11 @@ const UserManagement = () => {
       >
         <form id="create-user-form" onSubmit={handleCreateUser} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Full Name
             </label>
             <div className="relative">
-              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                 type="text"
                 required
@@ -458,11 +458,11 @@ const UserManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Email Address
             </label>
             <div className="relative">
-              <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                 type="email"
                 required
@@ -475,7 +475,7 @@ const UserManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
             <select
               required
               className="input-field"
@@ -523,11 +523,11 @@ const UserManagement = () => {
       >
         <form id="edit-user-form" onSubmit={handleUpdateUser} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Full Name
             </label>
             <div className="relative">
-              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                 type="text"
                 required
@@ -540,11 +540,11 @@ const UserManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Email Address
             </label>
             <div className="relative">
-              <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                 type="email"
                 required
@@ -557,7 +557,7 @@ const UserManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               <div className="flex items-center gap-2">
                 <FiShield className="h-4 w-4" />
                 Role
@@ -587,24 +587,24 @@ const UserManagement = () => {
                 type="checkbox"
                 checked={editFormData.isActive}
                 onChange={(e) => setEditFormData({ ...editFormData, isActive: e.target.checked })}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
               />
-              <span className="text-sm text-gray-700">User is active</span>
+              <span className="text-sm text-slate-700">User is active</span>
             </label>
           </div>
 
           {/* Previous Roles History */}
           {selectedUser?.previousRoles && selectedUser.previousRoles.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-3">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-slate-50 rounded-lg p-3">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Role History
               </label>
               <div className="space-y-1">
                 {selectedUser.previousRoles.map((pr, idx) => (
-                  <div key={idx} className="text-xs text-gray-600 flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-gray-200 rounded capitalize">{pr.role}</span>
+                  <div key={idx} className="text-xs text-slate-600 flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-slate-200 rounded capitalize">{pr.role}</span>
                     <span>→</span>
-                    <span className="text-gray-500">
+                    <span className="text-slate-500">
                       {new Date(pr.changedAt).toLocaleDateString('en-IN')}
                     </span>
                   </div>
@@ -660,13 +660,13 @@ const UserManagement = () => {
           </div>
 
           {selectedUser && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-500">Name:</div>
+            <div className="bg-slate-50 rounded-lg p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="text-slate-500">Name:</div>
                 <div className="font-medium">{selectedUser.name}</div>
-                <div className="text-gray-500">Email:</div>
+                <div className="text-slate-500">Email:</div>
                 <div className="font-medium">{selectedUser.email}</div>
-                <div className="text-gray-500">Role:</div>
+                <div className="text-slate-500">Role:</div>
                 <div><RoleBadge role={selectedUser.role} /></div>
               </div>
             </div>
@@ -688,8 +688,8 @@ const UserManagement = () => {
               <FiUser className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-800">{selectedUser?.name}'s Activity</h3>
-              <p className="text-sm text-slate-500">{selectedUser?.email}</p>
+              <h3 className="text-lg font-semibold text-slate-800 tracking-tight">{selectedUser?.name}'s Activity</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">{selectedUser?.email}</p>
             </div>
           </div>
         }

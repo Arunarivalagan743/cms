@@ -493,8 +493,8 @@ const ContractDetails = () => {
   if (!id || !isValidObjectId(id)) {
     return (
       <div className="text-center py-12">
-        <FiAlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">Invalid contract ID</p>
+        <FiAlertCircle className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+        <p className="text-slate-500 text-lg">Invalid contract ID</p>
         <Link to="/contracts" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
           Back to Contracts
         </Link>
@@ -505,8 +505,8 @@ const ContractDetails = () => {
   if (!contract) {
     return (
       <div className="text-center py-12">
-        <FiFileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg">Contract not found</p>
+        <FiFileText className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+        <p className="text-slate-500 text-lg">Contract not found</p>
         <Link to="/contracts" className="text-primary-600 hover:text-primary-700 mt-4 inline-block">
           Back to Contracts
         </Link>
@@ -525,16 +525,16 @@ const ContractDetails = () => {
         <div className="flex items-center gap-4">
           <Link
             to="/contracts"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <FiArrowLeft className="h-5 w-5 text-gray-600" />
+            <FiArrowLeft className="h-5 w-5 text-slate-600" />
           </Link>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{contract.contractName}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{contract.contractName}</h2>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-sm text-gray-600">{contract.contractNumber}</span>
-              <span className="text-gray-300">•</span>
-              <span className="text-sm text-gray-600">Version {contract.versionNumber}</span>
+              <span className="text-sm text-slate-600">{contract.contractNumber}</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-sm text-slate-600">Version {contract.versionNumber}</span>
             </div>
           </div>
         </div>
@@ -686,15 +686,15 @@ const ContractDetails = () => {
           {/* Changes in This Version - Diff View (Only for Legal/Finance/Admin, not for Client) */}
           {!isClient && getVersionChanges() && (
             <div className="card">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <FiEdit className="h-5 w-5 text-green-600" />
                 Changes in This Version
               </h4>
               <div className="space-y-3">
                 {getVersionChanges().map((change, index) => (
-                  <div key={index} className="flex items-start gap-4 py-2 border-b border-slate-100 last:border-0">
-                    <span className="text-sm font-medium text-gray-600 min-w-[120px]">{change.field}:</span>
-                    <div className="flex-1 flex items-center gap-3">
+                  <div key={index} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 py-2 border-b border-slate-100 last:border-0">
+                    <span className="text-sm font-medium text-slate-600 sm:min-w-[120px]">{change.field}:</span>
+                    <div className="flex-1 flex flex-wrap items-center gap-2 sm:gap-3">
                       <span className="text-sm text-red-500 line-through">
                         {change.before}
                       </span>
@@ -712,7 +712,7 @@ const ContractDetails = () => {
           {/* Previous Rejection History - Hidden from Client */}
           {!isClient && getPreviousRejectionHistory().length > 0 && (
             <div className="card">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <FiAlertCircle className="h-5 w-5 text-amber-600" />
                 Previous Rejection History
               </h4>
@@ -743,34 +743,34 @@ const ContractDetails = () => {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
+      <div className="border-b border-slate-200">
+        <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide -mb-px">
           <button
             onClick={() => setActiveTab('details')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
               activeTab === 'details'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             Details
           </button>
           <button
             onClick={() => setActiveTab('versions')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
               activeTab === 'versions'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             Versions ({versions.length})
           </button>
           <button
             onClick={() => setActiveTab('audit')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
               activeTab === 'audit'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             Audit Trail
@@ -781,25 +781,25 @@ const ContractDetails = () => {
       {/* Tab Content */}
       {activeTab === 'details' && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Contract Information</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-6">Contract Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 <FiFileText className="inline h-4 w-4 mr-1" />
                 Contract Name
               </label>
-              <p className="text-base text-gray-900">{contract.contractName}</p>
+              <p className="text-base text-slate-900">{contract.contractName}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Contract Number</label>
-              <p className="text-base text-gray-900">{contract.contractNumber}</p>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Contract Number</label>
+              <p className="text-base text-slate-900">{contract.contractNumber}</p>
             </div>
 
             {/* Workflow - Hidden from Clients */}
             {!isClient && (
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
+                <label className="block text-sm font-medium text-slate-600 mb-1">
                   <FiArrowRight className="inline h-4 w-4 mr-1" />
                   Workflow
                 </label>
@@ -811,7 +811,7 @@ const ContractDetails = () => {
                   {contract.workflow?.name || 'N/A'}
                 </span>
                 {contract.workflow?.steps && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     {contract.workflow.steps.map(s => s.role).join(' → ')}
                   </p>
                 )}
@@ -819,61 +819,61 @@ const ContractDetails = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 <FiUser className="inline h-4 w-4 mr-1" />
                 Client
               </label>
-              <p className="text-base text-gray-900">{contract.client?.name || 'N/A'}</p>
-              <p className="text-sm text-gray-500">{contract.client?.email || ''}</p>
+              <p className="text-base text-slate-900">{contract.client?.name || 'N/A'}</p>
+              <p className="text-sm text-slate-500">{contract.client?.email || ''}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Created By</label>
-              <p className="text-base text-gray-900">{contract.createdBy?.name || 'N/A'}</p>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Created By</label>
+              <p className="text-base text-slate-900">{contract.createdBy?.name || 'N/A'}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 <FiDollarSign className="inline h-4 w-4 mr-1" />
                 Amount
               </label>
-              <p className="text-base font-semibold text-gray-900">
+              <p className="text-base font-semibold text-slate-900">
                 {formatCurrency(contract.amount)}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
+              <label className="block text-sm font-medium text-slate-600 mb-1">
                 <FiCalendar className="inline h-4 w-4 mr-1" />
                 Effective Date
               </label>
-              <p className="text-base text-gray-900">{formatDate(contract.effectiveDate)}</p>
+              <p className="text-base text-slate-900">{formatDate(contract.effectiveDate)}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Created Date</label>
-              <p className="text-base text-gray-900">{formatDate(contract.createdAt)}</p>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Created Date</label>
+              <p className="text-base text-slate-900">{formatDate(contract.createdAt)}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Last Updated</label>
-              <p className="text-base text-gray-900">{formatDate(contract.updatedAt)}</p>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Last Updated</label>
+              <p className="text-base text-slate-900">{formatDate(contract.updatedAt)}</p>
             </div>
           </div>
 
           {/* Approval Timeline */}
           {(contract.approvedByFinance || contract.approvedByClient) && (
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h4 className="text-md font-semibold text-gray-900 mb-4">Approval Timeline</h4>
+            <div className="mt-8 pt-6 border-t border-slate-200">
+              <h4 className="text-md font-semibold text-slate-900 mb-4">Approval Timeline</h4>
               <div className="space-y-3">
                 {contract.approvedByFinance && (
                   <div className="flex items-center gap-3">
                     <FiCheckCircle className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="text-sm text-gray-900">
+                      <p className="text-sm text-slate-900">
                         Finance Approved by {contract.approvedByFinance.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         {formatDate(contract.financeApprovedAt)}
                       </p>
                     </div>
@@ -883,10 +883,10 @@ const ContractDetails = () => {
                   <div className="flex items-center gap-3">
                     <FiCheckCircle className="h-5 w-5 text-green-600" />
                     <div>
-                      <p className="text-sm text-gray-900">
+                      <p className="text-sm text-slate-900">
                         Client Approved by {contract.approvedByClient.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         {formatDate(contract.clientApprovedAt)}
                       </p>
                     </div>
@@ -903,8 +903,8 @@ const ContractDetails = () => {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Version History</h3>
-                <p className="text-sm text-gray-500">Complete timeline of contract changes and approvals</p>
+                <h3 className="text-lg font-semibold text-slate-900">Version History</h3>
+                <p className="text-sm text-slate-500">Complete timeline of contract changes and approvals</p>
               </div>
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <FiFileText className="h-4 w-4" />
@@ -1054,25 +1054,25 @@ const ContractDetails = () => {
           </div>
 
           <div className="overflow-x-auto shadow-sm border border-slate-200 rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Version</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status & Stage</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Contract Details</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Version</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Status & Stage</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Contract Details</th>
                   {!isClient && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Changes Made</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Changes Made</th>
                   )}
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Created By</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Created By</th>
                   {/* Hide Finance Review column if Direct Client Workflow */}
                   {!(contract.workflow?.name?.includes('Direct Client')) && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Finance Review</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Finance Review</th>
                   )}
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Client Review</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Remarks & Notes</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Client Review</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Remarks & Notes</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-200">
                 {versions
                   .filter(v => {
                     // Client visibility rules:
@@ -1168,7 +1168,7 @@ const ContractDetails = () => {
                             version.status === 'pending_client' ? 'text-blue-700' :
                             version.status === 'active' ? 'text-emerald-700' :
                             version.status === 'rejected' ? 'text-red-700' :
-                            'text-gray-600'
+                            'text-slate-600'
                           }`}>
                             {version.status === 'draft' ? 'Draft Created' :
                              version.status === 'pending_finance' ? 'Awaiting Finance' :
@@ -1395,11 +1395,11 @@ const ContractDetails = () => {
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                 <FiFileText className="h-5 w-5 text-primary-600" />
                 Audit Trail - Complete Contract History
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1">
                 <span className="font-semibold text-amber-700">Immutable & Append-Only:</span> Complete audit log of all contract-related actions. 
                 Logs cannot be edited or deleted. All changes tracked by user, role, timestamp, and remarks.
               </p>
@@ -1678,7 +1678,7 @@ const ContractDetails = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Internal Remarks (Legal & Admin Only) <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -1688,7 +1688,7 @@ const ContractDetails = () => {
                   className="input-field"
                   placeholder="e.g., GST calculation error in clause 4.2, Tax ID missing..."
                 />
-                <p className="text-xs text-gray-500 mt-1">This will NOT be shown to the Client</p>
+                <p className="text-xs text-slate-500 mt-1">This will NOT be shown to the Client</p>
               </div>
               
               {/* Optional: Send message to Client */}
@@ -1710,7 +1710,7 @@ const ContractDetails = () => {
                 
                 {sendClientRemark && (
                   <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Message for Client <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -1720,18 +1720,18 @@ const ContractDetails = () => {
                       className="input-field"
                       placeholder="e.g., Financial terms require revision, please review pricing..."
                     />
-                    <p className="text-xs text-gray-500 mt-1">Keep this professional - Client will see this</p>
+                    <p className="text-xs text-slate-500 mt-1">Keep this professional - Client will see this</p>
                   </div>
                 )}
               </div>
             </>
           ) : (
             <>
-              <p className="text-gray-600">
+              <p className="text-slate-600">
                 Please provide a reason for rejecting this contract. This will be visible to the Legal team.
               </p>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Rejection Remarks <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -1769,7 +1769,7 @@ const ContractDetails = () => {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Contract Name</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Contract Name</label>
             <input
               type="text"
               value={editData.contractName}
@@ -1778,7 +1778,7 @@ const ContractDetails = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Amount</label>
             <input
               type="number"
               value={editData.amount}
@@ -1787,7 +1787,7 @@ const ContractDetails = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Effective Date</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Effective Date</label>
             <input
               type="date"
               value={editData.effectiveDate}
@@ -1827,7 +1827,7 @@ const ContractDetails = () => {
 
           {/* Version Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Base Amendment On Version <span className="text-red-500">*</span>
             </label>
             <select
@@ -1851,7 +1851,7 @@ const ContractDetails = () => {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Select which version data you want to use as the starting point for your amendment
             </p>
           </div>
@@ -1862,19 +1862,19 @@ const ContractDetails = () => {
               <p className="text-sm font-semibold text-red-800 mb-2">Rejection Reason from v{selectedVersionForAmendment.versionNumber}:</p>
               {selectedVersionForAmendment.financeRemarkInternal && (
                 <div className="mb-2">
-                  <p className="text-xs text-gray-600 font-medium">Finance Internal:</p>
+                  <p className="text-xs text-slate-600 font-medium">Finance Internal:</p>
                   <p className="text-sm text-red-700 italic">"{selectedVersionForAmendment.financeRemarkInternal}"</p>
                 </div>
               )}
               {selectedVersionForAmendment.financeRemarkClient && (
                 <div className="mb-2">
-                  <p className="text-xs text-gray-600 font-medium">Finance to Client:</p>
+                  <p className="text-xs text-slate-600 font-medium">Finance to Client:</p>
                   <p className="text-sm text-red-700 italic">"{selectedVersionForAmendment.financeRemarkClient}"</p>
                 </div>
               )}
               {selectedVersionForAmendment.clientRemark && (
                 <div>
-                  <p className="text-xs text-gray-600 font-medium">Client Remark:</p>
+                  <p className="text-xs text-slate-600 font-medium">Client Remark:</p>
                   <p className="text-sm text-red-700 italic">"{selectedVersionForAmendment.clientRemark}"</p>
                 </div>
               )}
@@ -1883,10 +1883,10 @@ const ContractDetails = () => {
 
           {/* Pre-filled Form Fields */}
           <div className="border-t pt-4">
-            <p className="text-sm font-semibold text-gray-700 mb-3">Edit Contract Details:</p>
+            <p className="text-sm font-semibold text-slate-700 mb-3">Edit Contract Details:</p>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Contract Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -1899,7 +1899,7 @@ const ContractDetails = () => {
             </div>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Amount (USD) <span className="text-red-500">*</span>
               </label>
               <input
@@ -1913,7 +1913,7 @@ const ContractDetails = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Effective Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -1963,7 +1963,7 @@ const ContractDetails = () => {
           </p>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Message to Client <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -1973,7 +1973,7 @@ const ContractDetails = () => {
               className="input-field"
               placeholder="e.g., The contract requires revision due to pricing terms. Please review and resubmit..."
             />
-            <p className="text-xs text-gray-500 mt-1">This message will be visible to the client</p>
+            <p className="text-xs text-slate-500 mt-1">This message will be visible to the client</p>
           </div>
           
           <div className="flex justify-end gap-3 pt-4">

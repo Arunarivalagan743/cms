@@ -101,10 +101,10 @@ const SidebarContent = () => {
 
   return (
     <>
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-3 py-1 mb-6">
+      {/* Logo — hidden on mobile since MobileSidebar has its own header */}
+      <div className="hidden md:flex items-center gap-3 px-3 py-1 mb-6">
         <span className="w-[20px] flex items-center justify-center shrink-0">
-          <svg className="w-[20px] h-[20px] text-primary-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-[20px] h-[20px] text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5z" />
             <path d="M2 17l10 5 10-5" />
             <path d="M2 12l10 5 10-5" />
@@ -116,7 +116,7 @@ const SidebarContent = () => {
             animate={{ opacity: 1, width: "auto" }}
             exit={{ opacity: 0, width: 0 }}
             transition={{ duration: 0.2 }}
-            className="text-lg font-semibold text-white whitespace-nowrap overflow-hidden tracking-tight"
+            className="text-lg font-semibold text-slate-800 whitespace-nowrap overflow-hidden tracking-tight leading-tight"
           >
             Signora
           </motion.span>
@@ -126,7 +126,7 @@ const SidebarContent = () => {
       {/* User Info */}
       <div className="flex items-center gap-3 px-3 py-2 mb-5">
         <span className="w-[20px] flex items-center justify-center shrink-0">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-400/20" />
+          <div className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
         </span>
         {(open || !animate) && (
           <motion.div
@@ -136,10 +136,10 @@ const SidebarContent = () => {
             transition={{ duration: 0.2 }}
             className="min-w-0 overflow-hidden"
           >
-            <p className="text-sm font-medium text-slate-200 truncate">
+            <p className="text-sm font-medium text-slate-700 truncate">
               {user?.name}
             </p>
-            <p className="text-[11px] text-slate-500 capitalize truncate">
+            <p className="text-[11px] text-slate-400 capitalize truncate">
               {user?.role?.replace("_", " ")}
             </p>
           </motion.div>
@@ -178,7 +178,7 @@ const SidebarContent = () => {
       </div>
 
       {/* Bottom: Logout */}
-      <div className="pt-4 border-t border-slate-700">
+      <div className="pt-4 border-t border-slate-200">
         <SidebarLink
           link={{
             label: "Logout",
@@ -186,7 +186,7 @@ const SidebarContent = () => {
             icon: <FiLogOut className="h-[18px] w-[18px] shrink-0" />,
           }}
           onClick={handleLogout}
-          className="hover:!bg-red-600/20 hover:!text-red-400"
+          className="hover:!bg-red-50 hover:!text-red-600"
         />
       </div>
     </>
@@ -198,7 +198,7 @@ const AppSidebar = () => {
 
   return (
     <SidebarWrapper open={open} setOpen={setOpen} animate={true}>
-      <SidebarBody className="justify-between gap-2 border-r border-slate-700">
+      <SidebarBody className="justify-between gap-2 border-r border-slate-200">
         <SidebarContent />
       </SidebarBody>
     </SidebarWrapper>

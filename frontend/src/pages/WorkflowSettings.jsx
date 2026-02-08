@@ -209,8 +209,8 @@ const WorkflowSettings = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Workflow Configuration</h2>
-          <p className="text-gray-600 mt-1">Configure approval workflow steps (immutable versioning)</p>
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900">Workflow Configuration</h2>
+          <p className="text-slate-600 mt-1">Configure approval workflow steps (immutable versioning)</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -244,13 +244,13 @@ const WorkflowSettings = () => {
 
       {/* All Workflows */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">All Workflows ({workflows.length})</h3>
+        <h3 className="text-lg font-semibold text-slate-900">All Workflows ({workflows.length})</h3>
         
         {workflows.length === 0 ? (
           <div className="card text-center py-12">
-            <FiSettings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">No workflows found</h3>
-            <p className="text-gray-600 mt-1">Create your first workflow to define approval steps</p>
+            <FiSettings className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900">No workflows found</h3>
+            <p className="text-slate-600 mt-1">Create your first workflow to define approval steps</p>
             <button onClick={handleCreateNew} className="btn-primary mt-4">
               Create Workflow
             </button>
@@ -259,27 +259,27 @@ const WorkflowSettings = () => {
           workflows.map((workflow) => (
             <div 
               key={workflow._id} 
-              className={`card ${workflow.isActive ? 'border-2 border-green-500' : 'border border-gray-200'}`}
+              className={`card ${workflow.isActive ? 'border-2 border-green-500' : 'border border-slate-200'}`}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900">{workflow.name}</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">{workflow.name}</h3>
                     {workflow.isActive ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
                         <FiCheck className="h-4 w-4 mr-1" />
                         Active (v{workflow.version})
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-600">
                         Inactive (v{workflow.version})
                       </span>
                     )}
                   </div>
                   {workflow.description && (
-                    <p className="text-gray-600 text-sm mt-1">{workflow.description}</p>
+                    <p className="text-slate-600 text-sm mt-1">{workflow.description}</p>
                   )}
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-slate-500 mt-2">
                     Created: {formatDate(workflow.createdAt)}
                     {workflow.createdBy && ` by ${workflow.createdBy.name || workflow.createdBy.email}`}
                   </p>
@@ -288,10 +288,10 @@ const WorkflowSettings = () => {
 
               {/* Workflow Steps Visualization */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                <div className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 whitespace-nowrap">
+                <div className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200 text-slate-700 whitespace-nowrap">
                   Contract Created
                 </div>
-                <FiArrowRight className="h-5 w-5 text-gray-400 mx-1 flex-shrink-0" />
+                <FiArrowRight className="h-5 w-5 text-slate-400 mx-1 flex-shrink-0" />
                 
                 {workflow.steps
                   .filter(s => s.isActive)
@@ -306,18 +306,18 @@ const WorkflowSettings = () => {
                         `}>
                           {step.name}
                         </div>
-                        <span className="text-xs text-gray-500 mt-1 capitalize">
+                        <span className="text-xs text-slate-500 mt-1 capitalize">
                           {step.role.replace('_', ' ')} • {step.action.replace('_', ' ')}
                         </span>
                       </div>
                       {idx < arr.length - 1 && (
-                        <FiArrowRight className="h-5 w-5 text-gray-400 mx-2 flex-shrink-0" />
+                        <FiArrowRight className="h-5 w-5 text-slate-400 mx-2 flex-shrink-0" />
                       )}
                     </div>
                   ))}
-                <FiArrowRight className="h-5 w-5 text-gray-400 mx-1 flex-shrink-0" />
+                <FiArrowRight className="h-5 w-5 text-slate-400 mx-1 flex-shrink-0" />
                 <div className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
-                  workflow.isActive ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
+                  workflow.isActive ? 'bg-green-500 text-white' : 'bg-slate-300 text-slate-600'
                 }`}>
                   {workflow.isActive ? '✓ Active Contract' : 'Contract Active'}
                 </div>
@@ -336,27 +336,27 @@ const WorkflowSettings = () => {
       >
         <div className="space-y-4 max-h-96 overflow-y-auto">
           {workflows.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No workflow versions found</p>
+            <p className="text-slate-500 text-center py-4">No workflow versions found</p>
           ) : (
             workflows.sort((a, b) => b.version - a.version).map((workflow) => (
               <div 
                 key={workflow._id} 
-                className={`p-4 border rounded-lg ${workflow.isActive ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}
+                className={`p-4 border rounded-lg ${workflow.isActive ? 'border-green-500 bg-green-50' : 'border-slate-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">Version {workflow.version}</span>
+                      <span className="font-medium text-slate-900">Version {workflow.version}</span>
                       {workflow.isActive && (
                         <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
                           Active
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600">{workflow.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(workflow.createdAt)}</p>
+                    <p className="text-sm text-slate-600">{workflow.name}</p>
+                    <p className="text-xs text-slate-500 mt-1">{formatDate(workflow.createdAt)}</p>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-slate-500">
                     {workflow.steps?.length || 0} steps
                   </div>
                 </div>
@@ -376,7 +376,7 @@ const WorkflowSettings = () => {
                           {step.name}
                         </span>
                         {idx < arr.length - 1 && (
-                          <span className="mx-1 text-gray-400">→</span>
+                          <span className="mx-1 text-slate-400">→</span>
                         )}
                       </div>
                     ))}
@@ -413,7 +413,7 @@ const WorkflowSettings = () => {
             {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Workflow Name *
                 </label>
                 <input
@@ -425,7 +425,7 @@ const WorkflowSettings = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Description
                 </label>
                 <input
@@ -441,7 +441,7 @@ const WorkflowSettings = () => {
             {/* Steps */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-medium text-gray-900">Approval Steps</h4>
+                <h4 className="font-medium text-slate-900">Approval Steps</h4>
                 <button
                   type="button"
                   onClick={addStep}
@@ -456,16 +456,16 @@ const WorkflowSettings = () => {
                 {editingWorkflow.steps.map((step, index) => (
                   <div
                     key={index}
-                    className="border rounded-lg p-4 bg-gray-50"
+                    className="border rounded-lg p-4 bg-slate-50"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-600">Step {index + 1}</span>
+                      <span className="text-sm font-medium text-slate-600">Step {index + 1}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => moveStep(index, -1)}
                           disabled={index === 0}
-                          className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                          className="p-1 text-slate-500 hover:text-slate-700 disabled:opacity-30"
                         >
                           <FiChevronUp className="h-4 w-4" />
                         </button>
@@ -473,14 +473,14 @@ const WorkflowSettings = () => {
                           type="button"
                           onClick={() => moveStep(index, 1)}
                           disabled={index === editingWorkflow.steps.length - 1}
-                          className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                          className="p-1 text-slate-500 hover:text-slate-700 disabled:opacity-30"
                         >
                           <FiChevronDown className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => removeStep(index)}
-                          className="p-1 text-gray-500 hover:text-red-600"
+                          className="p-1 text-slate-500 hover:text-red-600"
                         >
                           <FiX className="h-4 w-4" />
                         </button>
@@ -489,7 +489,7 @@ const WorkflowSettings = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Step Name *</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Step Name *</label>
                         <input
                           type="text"
                           className="input-field text-sm"
@@ -499,7 +499,7 @@ const WorkflowSettings = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Approver Role</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Approver Role</label>
                         <select
                           className="input-field text-sm"
                           value={step.role}
@@ -511,7 +511,7 @@ const WorkflowSettings = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Action Type</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Action Type</label>
                         <select
                           className="input-field text-sm"
                           value={step.action}
@@ -530,18 +530,18 @@ const WorkflowSettings = () => {
                           type="checkbox"
                           checked={step.canSkip}
                           onChange={(e) => updateStep(index, 'canSkip', e.target.checked)}
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                         />
-                        <span className="text-xs text-gray-600">Can be skipped</span>
+                        <span className="text-xs text-slate-600">Can be skipped</span>
                       </label>
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           checked={step.isActive !== false}
                           onChange={(e) => updateStep(index, 'isActive', e.target.checked)}
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                         />
-                        <span className="text-xs text-gray-600">Active</span>
+                        <span className="text-xs text-slate-600">Active</span>
                       </label>
                     </div>
                   </div>
@@ -551,12 +551,12 @@ const WorkflowSettings = () => {
 
             {/* Preview */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Preview</h4>
-              <div className="flex items-center gap-2 overflow-x-auto p-3 bg-gray-100 rounded-lg">
-                <div className="px-3 py-1.5 rounded bg-gray-300 text-gray-700 text-sm whitespace-nowrap">
+              <h4 className="font-medium text-slate-900 mb-2">Preview</h4>
+              <div className="flex items-center gap-2 overflow-x-auto p-3 bg-slate-100 rounded-lg">
+                <div className="px-3 py-1.5 rounded bg-slate-300 text-slate-700 text-sm whitespace-nowrap">
                   Contract Created
                 </div>
-                <FiArrowRight className="h-4 w-4 text-gray-400" />
+                <FiArrowRight className="h-4 w-4 text-slate-400" />
                 {editingWorkflow.steps
                   .filter(s => s.isActive !== false)
                   .map((step, idx, arr) => (
@@ -569,11 +569,11 @@ const WorkflowSettings = () => {
                         {step.name || `Step ${idx + 1}`}
                       </div>
                       {idx < arr.length - 1 && (
-                        <FiArrowRight className="h-4 w-4 text-gray-400 mx-2" />
+                        <FiArrowRight className="h-4 w-4 text-slate-400 mx-2" />
                       )}
                     </div>
                   ))}
-                <FiArrowRight className="h-4 w-4 text-gray-400 mx-2" />
+                <FiArrowRight className="h-4 w-4 text-slate-400 mx-2" />
                 <div className="px-3 py-1.5 rounded bg-green-500 text-white text-sm whitespace-nowrap">
                   ✓ Active
                 </div>

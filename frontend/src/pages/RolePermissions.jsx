@@ -5,12 +5,25 @@ import {
   FiCheck,
   FiX,
   FiInfo,
+  FiLock,
 } from 'react-icons/fi';
 import { getPermissions, updatePermissions } from '../services/adminService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import RoleBadge from '../components/RoleBadge';
 import Toast from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
+
+// Permissions that Super Admin is NOT allowed to have (read-only + admin controls only)
+const SUPER_ADMIN_BLOCKED_PERMISSIONS = [
+  'canCreateContract',
+  'canEditDraft',
+  'canEditSubmitted',
+  'canDeleteContract',
+  'canSubmitContract',
+  'canApproveContract',
+  'canRejectContract',
+  'canAmendContract',
+];
 
 const permissionGroups = {
   'Contract Operations': [
@@ -69,6 +82,11 @@ const RolePermissions = () => {
   };
 
   const handlePermissionChange = (role, permissionKey, value) => {
+    // Block contract operation permissions for super_admin
+    if (role === 'super_admin' && SUPER_ADMIN_BLOCKED_PERMISSIONS.includes(permissionKey)) {
+      return;
+    }
+
     setPermissions(prev =>
       prev.map(p => {
         if (p.role === role) {
@@ -118,8 +136,8 @@ const RolePermissions = () => {
 
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Role Permissions</h2>
-        <p className="text-gray-600 mt-1">Configure what each role can do in the system</p>
+        <h2 className="text-lg sm:text-2xl font-bold text-slate-900">Role Permissions</h2>
+        <p className="text-slate-600 mt-1">Configure what each role can do in the system</p>
       </div>
 
       {/* Info Card */}
@@ -138,10 +156,10 @@ const RolePermissions = () => {
 
       {/* Permission Matrix */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table className="min-w-full bg-white border border-slate-200 rounded-lg overflow-hidden">
           <thead>
-            <tr className="bg-gray-50">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 w-64">
+            <tr className="bg-slate-50">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900 min-w-[180px] sm:w-64">
                 Permission
               </th>
               {roles.map(role => (
@@ -151,29 +169,30 @@ const RolePermissions = () => {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-200">
             {Object.entries(permissionGroups).map(([groupName, groupPermissions]) => (
               <Fragment key={groupName}>
-                <tr className="bg-gray-100">
+                <tr className="bg-slate-100">
                   <td colSpan={roles.length + 1} className="px-4 py-2">
                     <div className="flex items-center gap-2">
-                      <FiShield className="h-4 w-4 text-gray-500" />
-                      <span className="font-semibold text-gray-700">{groupName}</span>
+                      <FiShield className="h-4 w-4 text-slate-500" />
+                      <span className="font-semibold text-slate-700">{groupName}</span>
                     </div>
                   </td>
                 </tr>
                 {groupPermissions.map(permission => (
-                  <tr key={permission.key} className="hover:bg-gray-50">
+                  <tr key={permission.key} className="hover:bg-slate-50">
                     <td className="px-4 py-3">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{permission.label}</div>
-                        <div className="text-xs text-gray-500">{permission.description}</div>
+                        <div className="text-sm font-medium text-slate-900">{permission.label}</div>
+                        <div className="text-xs text-slate-500">{permission.description}</div>
                       </div>
                     </td>
                     {roles.map(role => {
                       const rolePerms = getRolePermissions(role);
                       const isChecked = rolePerms[permission.key] || false;
-                      const isDisabled = role === 'super_admin' && permission.key === 'canConfigurePermissions';
+                      const isSuperAdminBlocked = role === 'super_admin' && SUPER_ADMIN_BLOCKED_PERMISSIONS.includes(permission.key);
+                      const isDisabled = isSuperAdminBlocked || (role === 'super_admin' && permission.key === 'canConfigurePermissions');
 
                       return (
                         <td key={role} className="px-4 py-3 text-center">
@@ -182,13 +201,17 @@ const RolePermissions = () => {
                             onClick={() => handlePermissionChange(role, permission.key, !isChecked)}
                             disabled={isDisabled}
                             className={`p-2 rounded-lg transition-colors ${
-                              isChecked
-                                ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                            } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            title={isDisabled ? 'Cannot modify this permission' : ''}
+                              isSuperAdminBlocked
+                                ? 'bg-red-50 text-red-300 cursor-not-allowed'
+                                : isChecked
+                                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                                  : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                            } ${isDisabled && !isSuperAdminBlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={isSuperAdminBlocked ? 'Super Admin cannot have this permission' : isDisabled ? 'Cannot modify this permission' : ''}
                           >
-                            {isChecked ? (
+                            {isSuperAdminBlocked ? (
+                              <FiLock className="h-5 w-5" />
+                            ) : isChecked ? (
                               <FiCheck className="h-5 w-5" />
                             ) : (
                               <FiX className="h-5 w-5" />
@@ -228,15 +251,16 @@ const RolePermissions = () => {
 
       {/* Quick Permission Templates */}
       <div className="card">
-        <h3 className="font-semibold text-gray-900 mb-4">Default Permission Templates</h3>
+        <h3 className="font-semibold text-slate-900 mb-4">Default Permission Templates</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
             <RoleBadge role="super_admin" className="mb-2" />
             <ul className="text-sm text-blue-700 space-y-1">
-              <li>✓ Full system access</li>
-              <li>✓ All contract operations</li>
+              <li>✓ Full system visibility</li>
               <li>✓ User management</li>
               <li>✓ System configuration</li>
+              <li className="text-red-600">✗ Cannot approve/reject</li>
+              <li className="text-red-600">✗ Cannot edit contracts</li>
             </ul>
           </div>
           <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">

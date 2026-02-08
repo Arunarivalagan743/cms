@@ -83,7 +83,7 @@ const actionConfig = {
   workflow_updated: { icon: FiSettings, color: 'text-indigo-600', label: 'Workflow Updated', category: 'System' },
   workflow_created: { icon: FiSettings, color: 'text-indigo-600', label: 'Workflow Created', category: 'System' },
   workflow_activated: { icon: FiSettings, color: 'text-green-600', label: 'Workflow Activated', category: 'System' },
-  workflow_deactivated: { icon: FiSettings, color: 'text-gray-600', label: 'Workflow Deactivated', category: 'System' },
+  workflow_deactivated: { icon: FiSettings, color: 'text-slate-600', label: 'Workflow Deactivated', category: 'System' },
   permission_updated: { icon: FiShield, color: 'text-purple-600', label: 'Permission Updated', category: 'System' },
   system_config_changed: { icon: FiSettings, color: 'text-slate-600', label: 'Config Changed', category: 'System' },
   
@@ -177,9 +177,9 @@ const SystemLogs = () => {
       return (
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-gray-900">{getUserDisplay(performedBy, details?.email)}</span>
+            <span className="font-medium text-slate-900">{getUserDisplay(performedBy, details?.email)}</span>
             {performedBy?.role && <RoleBadge role={performedBy.role} size="xs" />}
-            <span className="text-gray-600">
+            <span className="text-slate-600">
               {action === 'created' && 'created contract'}
               {action === 'updated' && 'updated contract'}
               {action === 'submitted' && 'submitted contract'}
@@ -191,11 +191,11 @@ const SystemLogs = () => {
           </div>
           
           {/* Contract Details */}
-          <div className="pl-4 border-l-2 border-gray-200 space-y-1.5">
+          <div className="pl-4 border-l-2 border-slate-200 space-y-1.5">
             {contractNumber && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500 w-32">Contract #:</span>
-                <span className="font-mono text-gray-900">{contractNumber}</span>
+                <span className="text-slate-500 w-32">Contract #:</span>
+                <span className="font-mono text-slate-900">{contractNumber}</span>
               </div>
             )}
             
@@ -203,26 +203,26 @@ const SystemLogs = () => {
               <>
                 {versionDetails.contractName && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Contract Name:</span>
-                    <span className="font-medium text-gray-900">{versionDetails.contractName}</span>
+                    <span className="text-slate-500 w-32">Contract Name:</span>
+                    <span className="font-medium text-slate-900">{versionDetails.contractName}</span>
                   </div>
                 )}
                 
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500 w-32">Version:</span>
-                  <span className="font-mono text-gray-700">v{versionDetails.versionNumber}</span>
+                  <span className="text-slate-500 w-32">Version:</span>
+                  <span className="font-mono text-slate-700">v{versionDetails.versionNumber}</span>
                 </div>
                 
                 {versionDetails.status && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Status:</span>
+                    <span className="text-slate-500 w-32">Status:</span>
                     <StatusBadge status={versionDetails.status} size="xs" />
                   </div>
                 )}
                 
                 {versionDetails.amount && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Amount:</span>
+                    <span className="text-slate-500 w-32">Amount:</span>
                     <span className="font-semibold text-green-700">
                       ${parseFloat(versionDetails.amount).toLocaleString()}
                     </span>
@@ -231,22 +231,22 @@ const SystemLogs = () => {
                 
                 {versionDetails.effectiveDate && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Effective Date:</span>
-                    <span className="text-gray-700">{formatDate(versionDetails.effectiveDate)}</span>
+                    <span className="text-slate-500 w-32">Effective Date:</span>
+                    <span className="text-slate-700">{formatDate(versionDetails.effectiveDate)}</span>
                   </div>
                 )}
                 
                 {/* Approval/Rejection Info */}
                 {action === 'approved' && versionDetails.approvedByFinance && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Approved By:</span>
-                    <span className="text-gray-900">{versionDetails.approvedByFinance.name}</span>
+                    <span className="text-slate-500 w-32">Approved By:</span>
+                    <span className="text-slate-900">{versionDetails.approvedByFinance.name}</span>
                   </div>
                 )}
                 
                 {action === 'rejected' && versionDetails.rejectedBy && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Rejected By:</span>
+                    <span className="text-slate-500 w-32">Rejected By:</span>
                     <span className="text-red-600">{versionDetails.rejectedBy.name}</span>
                   </div>
                 )}
@@ -254,15 +254,15 @@ const SystemLogs = () => {
                 {/* Remarks */}
                 {versionDetails.financeRemarkInternal && (
                   <div className="flex gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Finance Remark:</span>
-                    <span className="text-gray-700 italic">"{versionDetails.financeRemarkInternal}"</span>
+                    <span className="text-slate-500 w-32">Finance Remark:</span>
+                    <span className="text-slate-700 italic">"{versionDetails.financeRemarkInternal}"</span>
                   </div>
                 )}
                 
                 {versionDetails.clientRemark && (
                   <div className="flex gap-2 text-sm">
-                    <span className="text-gray-500 w-32">Client Comment:</span>
-                    <span className="text-gray-700 italic">"{versionDetails.clientRemark}"</span>
+                    <span className="text-slate-500 w-32">Client Comment:</span>
+                    <span className="text-slate-700 italic">"{versionDetails.clientRemark}"</span>
                   </div>
                 )}
               </>
@@ -270,8 +270,8 @@ const SystemLogs = () => {
             
             {remarks && (
               <div className="flex gap-2 text-sm">
-                <span className="text-gray-500 w-32">Remarks:</span>
-                <span className="text-gray-700 italic">"{remarks}"</span>
+                <span className="text-slate-500 w-32">Remarks:</span>
+                <span className="text-slate-700 italic">"{remarks}"</span>
               </div>
             )}
           </div>
@@ -287,9 +287,9 @@ const SystemLogs = () => {
       case 'login':
         return (
           <span>
-            <span className="font-medium text-gray-900">{performedByName}</span>
+            <span className="font-medium text-slate-900">{performedByName}</span>
             {details?.email && performedByName !== details.email && (
-              <span className="text-gray-600 text-sm ml-1">({details.email})</span>
+              <span className="text-slate-600 text-sm ml-1">({details.email})</span>
             )}
             {' '}logged in successfully
           </span>
@@ -299,9 +299,9 @@ const SystemLogs = () => {
       case 'logout':
         return (
           <span>
-            <span className="font-medium text-gray-900">{performedByName}</span>
+            <span className="font-medium text-slate-900">{performedByName}</span>
             {details?.email && performedByName !== details.email && (
-              <span className="text-gray-600 text-sm ml-1">({details.email})</span>
+              <span className="text-slate-600 text-sm ml-1">({details.email})</span>
             )}
             {' '}logged out
           </span>
@@ -311,23 +311,23 @@ const SystemLogs = () => {
           <div className="space-y-1">
             <div>
               <span className="font-medium text-blue-700">{performedByName}</span>
-              {performedByRole && <span className="text-gray-500"> ({performedByRole})</span>}
+              {performedByRole && <span className="text-slate-500"> ({performedByRole})</span>}
               {!performedBy && details?.email && (
-                <span className="text-gray-600 text-sm ml-1">({details.email})</span>
+                <span className="text-slate-600 text-sm ml-1">({details.email})</span>
               )}
               {' '}created new user
             </div>
             <div className="pl-4 border-l-2 border-blue-200 space-y-0.5 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-24">Name:</span>
-                <strong className="text-gray-900">{details?.userName}</strong>
+                <span className="text-slate-500 w-24">Name:</span>
+                <strong className="text-slate-900">{details?.userName}</strong>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-24">Email:</span>
-                <span className="text-gray-700">{details?.userEmail}</span>
+                <span className="text-slate-500 w-24">Email:</span>
+                <span className="text-slate-700">{details?.userEmail}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-24">Role:</span>
+                <span className="text-slate-500 w-24">Role:</span>
                 <RoleBadge role={details?.assignedRole} size="xs" />
               </div>
             </div>
@@ -338,22 +338,22 @@ const SystemLogs = () => {
           <div className="space-y-1">
             <div>
               <span className="font-medium text-purple-700">{performedByName}</span>
-              {performedByRole && <span className="text-gray-500"> ({performedByRole})</span>}
+              {performedByRole && <span className="text-slate-500"> ({performedByRole})</span>}
               {' '}changed role for <strong>{targetUser?.name || 'user'}</strong>
             </div>
             <div className="pl-4 border-l-2 border-purple-200 space-y-0.5 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-24">From:</span>
+                <span className="text-slate-500 w-24">From:</span>
                 <RoleBadge role={details?.fromRole} size="xs" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-24">To:</span>
+                <span className="text-slate-500 w-24">To:</span>
                 <RoleBadge role={details?.toRole} size="xs" />
               </div>
               {targetUser?.email && (
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 w-24">User Email:</span>
-                  <span className="text-gray-700">{targetUser.email}</span>
+                  <span className="text-slate-500 w-24">User Email:</span>
+                  <span className="text-slate-700">{targetUser.email}</span>
                 </div>
               )}
             </div>
@@ -381,15 +381,15 @@ const SystemLogs = () => {
           <div className="space-y-1">
             <div>
               <span className="font-medium text-purple-700">{performedByName}</span>
-              {performedByRole && <span className="text-gray-500"> ({performedByRole})</span>}
+              {performedByRole && <span className="text-slate-500"> ({performedByRole})</span>}
               {!performedBy && details?.email && (
-                <span className="text-gray-600 text-sm ml-1">({details.email})</span>
+                <span className="text-slate-600 text-sm ml-1">({details.email})</span>
               )}
               {' '}updated permissions
             </div>
             <div className="pl-4 border-l-2 border-purple-200 space-y-0.5 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-24">For Role:</span>
+                <span className="text-slate-500 w-24">For Role:</span>
                 <RoleBadge role={details?.role} size="xs" />
               </div>
             </div>
@@ -398,9 +398,9 @@ const SystemLogs = () => {
       default:
         return (
           <span>
-            <span className="font-medium text-gray-900">{performedByName}</span>
+            <span className="font-medium text-slate-900">{performedByName}</span>
             {!performedBy && details?.email && (
-              <span className="text-gray-600 text-sm ml-1">({details.email})</span>
+              <span className="text-slate-600 text-sm ml-1">({details.email})</span>
             )}
             {' '}{action.replace(/_/g, ' ')}
           </span>
@@ -417,13 +417,13 @@ const SystemLogs = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">System-Wide Activity Logs</h2>
-          <p className="text-gray-600 mt-1">Complete audit trail of all platform activities - users, contracts, workflows, and system changes</p>
+          <h2 className="text-lg sm:text-2xl font-bold text-slate-900">System-Wide Activity Logs</h2>
+          <p className="text-slate-600 mt-1">Complete audit trail of all platform activities - users, contracts, workflows, and system changes</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'bg-gray-200' : ''}`}
+            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'bg-slate-200' : ''}`}
           >
             <FiFilter className="h-4 w-4" />
             Filters
@@ -442,7 +442,7 @@ const SystemLogs = () => {
       {/* Comprehensive Stats Cards */}
       {stats && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Today's Activity Overview</h3>
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">Today's Activity Overview</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             {/* Overall Stats */}
             <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
@@ -510,11 +510,11 @@ const SystemLogs = () => {
       {/* Comprehensive Filters */}
       {showFilters && (
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Filter Activities</h3>
+          <h3 className="text-sm font-semibold text-slate-700 mb-4">Filter Activities</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             {/* Resource Type Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Activity Type</label>
               <select
                 className="input-field"
                 value={filters.resourceType}
@@ -528,7 +528,7 @@ const SystemLogs = () => {
             
             {/* Search */}
             <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Search</label>
               <input
                 type="text"
                 className="input-field"
@@ -540,7 +540,7 @@ const SystemLogs = () => {
             
             {/* Action Type Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Action</label>
               <select
                 className="input-field"
                 value={filters.action}
@@ -576,7 +576,7 @@ const SystemLogs = () => {
             
             {/* Date Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
               <input
                 type="date"
                 className="input-field"
@@ -585,7 +585,7 @@ const SystemLogs = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
               <input
                 type="date"
                 className="input-field"
@@ -614,11 +614,10 @@ const SystemLogs = () => {
         />
       ) : (
         <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700">
-              Activity Timeline ({pagination.total} total activities)
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">\n            <h3 className="text-sm font-semibold text-slate-700">
+              Activity Timeline ({pagination.total} total)
             </h3>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-slate-500">
               Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)}
             </div>
           </div>
@@ -637,7 +636,7 @@ const SystemLogs = () => {
                       rounded-lg border-2 transition-all hover:shadow-md
                       ${log.resourceType === 'Contract' 
                         ? 'border-blue-200 bg-blue-50/50' 
-                        : 'border-gray-200 bg-white'
+                        : 'border-slate-200 bg-white'
                       }
                     `}>
                       <div className="p-4">
@@ -645,7 +644,7 @@ const SystemLogs = () => {
                         <div className="flex items-start gap-3 mb-3">
                           <div className={`
                             flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center
-                            ${log.resourceType === 'Contract' ? 'bg-blue-100' : 'bg-gray-100'}
+                            ${log.resourceType === 'Contract' ? 'bg-blue-100' : 'bg-slate-100'}
                           `}>
                             <ActionIcon className={`h-5 w-5 ${actionDisplay.color}`} />
                           </div>
@@ -655,7 +654,7 @@ const SystemLogs = () => {
                               <span className={`text-sm font-semibold ${actionDisplay.color}`}>
                                 {actionDisplay.label}
                               </span>
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                                 {log.resourceType || 'User'}
                               </span>
                               {userRole && (
@@ -669,15 +668,15 @@ const SystemLogs = () => {
                             </div>
                             
                             {/* User Info */}
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                              <span className="font-medium text-gray-900">{userName}</span>
+                            <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
+                              <span className="font-medium text-slate-900">{userName}</span>
                               {log.performedBy?.email && (
-                                <span className="text-xs text-gray-500">({log.performedBy.email})</span>
+                                <span className="text-xs text-slate-500">({log.performedBy.email})</span>
                               )}
                             </div>
                             
                             {/* Timestamp and IP */}
-                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <div className="flex items-center gap-3 text-xs text-slate-500">
                               <span className="flex items-center gap-1">
                                 <FiClock className="h-3 w-3" />
                                 {formatDate(log.createdAt, true)}
@@ -690,7 +689,7 @@ const SystemLogs = () => {
                         </div>
                         
                         {/* Activity Details */}
-                        <div className="ml-13 text-sm text-gray-800">
+                        <div className="ml-13 text-sm text-slate-800">
                           {renderLogDetails(log)}
                         </div>
                       </div>
@@ -703,9 +702,9 @@ const SystemLogs = () => {
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t pt-4">
-              <div className="text-sm text-gray-600">
-                Page {pagination.page} of {pagination.pages} ({pagination.total} total activities)
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t pt-4">
+              <div className="text-sm text-slate-600">
+                Page {pagination.page} of {pagination.pages}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -716,7 +715,7 @@ const SystemLogs = () => {
                   <FiChevronLeft className="h-4 w-4" />
                   Previous
                 </button>
-                <span className="text-sm text-gray-600 px-3">
+                <span className="text-sm text-slate-600 px-3">
                   {pagination.page}
                 </span>
                 <button

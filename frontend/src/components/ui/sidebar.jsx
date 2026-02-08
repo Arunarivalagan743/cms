@@ -63,7 +63,7 @@ export const DesktopSidebar = ({ className, children, ...props }) => {
 
   return (
     <motion.div
-      className={`h-full px-2 py-4 hidden md:flex md:flex-col bg-slate-800 shrink-0 ${className || ""}`}
+      className={`h-full px-2 py-4 hidden md:flex md:flex-col bg-white border-r border-slate-200 shrink-0 ${className || ""}`}
       animate={{
         width: animate ? (open ? "240px" : "60px") : "240px",
       }}
@@ -86,16 +86,16 @@ export const MobileSidebar = ({ className, children, ...props }) => {
   return (
     <>
       {/* Mobile toggle */}
-      <div className="flex md:hidden fixed top-0 left-0 right-0 z-50 bg-slate-800 px-4 py-3 items-center justify-between shadow-lg">
+      <div className="flex md:hidden fixed top-0 left-0 right-0 z-50 bg-white px-4 py-3 items-center justify-between shadow-sm border-b border-slate-200">
         <div className="flex items-center gap-2">
-          <svg className="w-6 h-6 shrink-0 text-primary-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-6 h-6 shrink-0 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5z" />
             <path d="M2 17l10 5 10-5" />
             <path d="M2 12l10 5 10-5" />
           </svg>
-          <span className="text-base font-semibold text-white">Signora</span>
+          <span className="text-base font-semibold text-slate-800">Signora</span>
         </div>
-        <button onClick={() => setOpen(!open)} className="text-white p-1">
+        <button onClick={() => setOpen(!open)} className="text-slate-600 p-1">
           <FiMenu className="h-5 w-5" />
         </button>
       </div>
@@ -117,19 +117,19 @@ export const MobileSidebar = ({ className, children, ...props }) => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className={`fixed inset-y-0 left-0 z-[100] w-[260px] bg-slate-800 px-4 py-4 flex flex-col md:hidden shadow-2xl ${className || ""}`}
+              className={`fixed inset-y-0 left-0 z-[100] w-[260px] bg-white px-4 py-4 flex flex-col md:hidden shadow-2xl border-r border-slate-200 ${className || ""}`}
               {...props}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <svg className="w-6 h-6 shrink-0 text-primary-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="w-6 h-6 shrink-0 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z" />
                     <path d="M2 17l10 5 10-5" />
                     <path d="M2 12l10 5 10-5" />
                   </svg>
-                  <span className="text-base font-semibold text-white">Signora</span>
+                  <span className="text-base font-semibold text-slate-800">Signora</span>
                 </div>
-                <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white p-1">
+                <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
                   <FiX className="h-5 w-5" />
                 </button>
               </div>
@@ -183,10 +183,10 @@ export const SidebarLink = ({
     </>
   );
 
-  const baseClasses = `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+  const baseClasses = `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium leading-5 transition-colors ${
     active
-      ? "bg-white/10 text-white"
-      : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+      ? "bg-primary-50 text-primary-700"
+      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
   } ${className || ""}`;
 
   if (isButton) {
@@ -224,7 +224,7 @@ export const SidebarLabel = ({ label, className }) => {
           animate={{ opacity: 1, width: "auto" }}
           exit={{ opacity: 0, width: 0 }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
-          className={`px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap overflow-hidden ${className || ""}`}
+          className={`px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.08em] whitespace-nowrap overflow-hidden ${className || ""}`}
         >
           {label}
         </motion.p>
